@@ -123,7 +123,21 @@ def make_empty(name, loc=(0, 0, 0), parent=None):
     return empty
 
 
+def convert_to_unity_yup(obj):
+    loc = obj.location.copy()
+    obj.location = Vector((loc.x, loc.z, -loc.y))
+    if obj.type == "MESH" and obj.data is not None:
+        for v in obj.data.vertices:
+            co = v.co.copy()
+            v.co = Vector((co.x, co.z, -co.y))
+        obj.data.update()
+    for child in obj.children:
+        convert_to_unity_yup(child)
+
+
 def export_fbx(root_obj, filename):
+    convert_to_unity_yup(root_obj)
+    bpy.context.view_layer.update()
     bpy.ops.object.select_all(action="DESELECT")
 
     def select_hierarchy(obj):
@@ -143,7 +157,7 @@ def export_fbx(root_obj, filename):
         apply_scale_options="FBX_SCALE_ALL",
         axis_forward="-Z",
         axis_up="Y",
-        bake_space_transform=True,
+        bake_space_transform=False,
         mesh_smooth_type="FACE",
     )
     print(f"[BlenderGenerator] Exported {filepath}")
