@@ -29,9 +29,9 @@ Material:
     - _RimPower: 3.5
     - _RimStrength: 0.45
     m_Colors:
-    - _BaseColor: {r: 0.72156864, g: 0.2, b: 0.41568628, a: 1}
-    - _EmissionColor: {r: 0.23090196, g: 0.064, b: 0.13301961, a: 0.32}
+    - _BaseColor: {r: 1, g: 0.18039216, b: 0.4745098, a: 1}
+    - _EmissionColor: {r: 0.32, g: 0.05772549, b: 0.15184313, a: 0.32}
     - _RimColor: {r: 1, g: 0.43137255, b: 0.15294118, a: 1}
-    - _ShadowTint: {r: 0.0627451, g: 0.07450981, b: 0.11764706, a: 1}
+    - _ShadowTint: {r: 0.32156864, g: 0.39215687, b: 0.61960787, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

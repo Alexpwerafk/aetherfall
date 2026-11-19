@@ -39,15 +39,16 @@ public static class BuildAetherfall
         SetupLightingAndSky(skyMat);
         SetupGlobalVolume();
 
-        // Build 3-Chamber Sanctum Architecture
+        // Build 3-Chamber Sunlit 3D Cartoon Sky-Sanctum
         GameObject envRoot = new GameObject("SanctumEnvironment");
+        BuildSkySeaAndFloatingIslands(envRoot.transform, mats);
         BuildChamberFloor(envRoot.transform, "Chamber1_Courtyard", 0f, -8f, 8f, -8f, 8f, mats);
         BuildBridge(envRoot.transform, "Bridge1", 9f, 19f, mats, out GameObject barrier1, Palette.HeroCrimson);
         BuildChamberFloor(envRoot.transform, "Chamber2_FloodedHall", 28f, 20f, 36f, -8f, 8f, mats);
         BuildBridge(envRoot.transform, "Bridge2", 37f, 47f, mats, out GameObject barrier2, Palette.LightningCyan);
         BuildChamberFloor(envRoot.transform, "Chamber3_EclipseThrone", 56f, 48f, 64f, -8f, 8f, mats);
 
-        // Pillars & Torch Braziers
+        // Pillars, Cartoon Trees, Crystal Clusters & Torch Braziers
         PlaceChamberProps(envRoot.transform, mats);
 
         // Hero
@@ -155,7 +156,16 @@ public static class BuildAetherfall
             ("Mat_FrostIce", Palette.FrostIce, Palette.FrostIce * 1.4f, 2.5f, 0.4f, Palette.WaterAzure),
             ("Mat_OilDark", Palette.OilDark, null, 0f, 0.18f, Palette.MarbleTrim),
             ("Mat_Surface_Oil", Palette.OilDark, Palette.OilDark * 0.12f, 0f, 0.35f, Palette.MarbleTrim),
-            ("Mat_Surface_Water", Palette.WaterAzure, Palette.WaterAzure * 0.45f, 1.8f, 0.4f, Palette.FrostIce)
+            ("Mat_Surface_Water", Palette.WaterAzure, Palette.WaterAzure * 0.45f, 1.8f, 0.4f, Palette.FrostIce),
+            ("Mat_GrassLush", Palette.GrassLush, null, 0f, 0.20f, Palette.GrassLight),
+            ("Mat_GrassLight", Palette.GrassLight, null, 0f, 0.22f, Palette.IvoryCloth),
+            ("Mat_TreeTrunk", Palette.TreeTrunk, null, 0f, 0.15f, Palette.MarbleTrim),
+            ("Mat_CliffTerracotta", Palette.CliffTerracotta, null, 0f, 0.16f, Palette.MarbleTrim),
+            ("Mat_CrystalMagenta", Palette.CrystalMagenta, Palette.CrystalMagenta * 0.85f, 3.2f, 0.45f, Palette.IvoryCloth),
+            ("Mat_RoyalRoofBlue", Palette.RoyalRoofBlue, null, 0f, 0.25f, Palette.LightningCyan),
+            ("Mat_SkySeaTurquoise", Palette.SkySeaTurquoise, Palette.SkySeaTurquoise * 0.25f, 1.2f, 0.1f, Palette.IvoryCloth),
+            ("Mat_CloudWhite", Palette.IvoryCloth, Palette.IvoryCloth * 0.15f, 0f, 0.2f, Palette.DeepVoidSky),
+            ("Mat_SandTileAlt", Color.Lerp(Palette.ObsidianFloor, Palette.MarbleTrim, 0.55f), null, 0f, 0.14f, Palette.FiligreeGold)
         };
 
         var dict = new Dictionary<string, Material>();
@@ -198,12 +208,12 @@ public static class BuildAetherfall
             AssetDatabase.CreateAsset(sky, path);
         }
 
-        if (sky.HasProperty("_SkyTint")) sky.SetColor("_SkyTint", Palette.AmbientSky);
-        if (sky.HasProperty("_GroundColor")) sky.SetColor("_GroundColor", Palette.AbyssShadow);
-        if (sky.HasProperty("_AtmosphereThickness")) sky.SetFloat("_AtmosphereThickness", 0.45f);
-        if (sky.HasProperty("_Exposure")) sky.SetFloat("_Exposure", 1.25f);
-        if (sky.HasProperty("_SunSize")) sky.SetFloat("_SunSize", 0f);
-        if (sky.HasProperty("_BaseColor")) sky.SetColor("_BaseColor", Palette.AmbientEquator);
+        if (sky.HasProperty("_SkyTint")) sky.SetColor("_SkyTint", Palette.DeepVoidSky);
+        if (sky.HasProperty("_GroundColor")) sky.SetColor("_GroundColor", Palette.SkySeaTurquoise);
+        if (sky.HasProperty("_AtmosphereThickness")) sky.SetFloat("_AtmosphereThickness", 0.85f);
+        if (sky.HasProperty("_Exposure")) sky.SetFloat("_Exposure", 1.45f);
+        if (sky.HasProperty("_SunSize")) sky.SetFloat("_SunSize", 0.04f);
+        if (sky.HasProperty("_BaseColor")) sky.SetColor("_BaseColor", Palette.DeepVoidSky);
         EditorUtility.SetDirty(sky);
         AssetDatabase.SaveAssets();
         return sky;
@@ -218,24 +228,24 @@ public static class BuildAetherfall
         RenderSettings.ambientGroundColor = Palette.AmbientGround;
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
-        RenderSettings.fogColor = Palette.AbyssShadow;
-        RenderSettings.fogDensity = 0.008f;
+        RenderSettings.fogColor = Palette.DeepVoidSky;
+        RenderSettings.fogDensity = 0.0032f;
 
         GameObject lightGo = new GameObject("Directional Key Light");
         Light key = lightGo.AddComponent<Light>();
         key.type = LightType.Directional;
         key.color = Palette.KeyLightWarm;
-        key.intensity = 1.75f;
+        key.intensity = 1.85f;
         key.shadows = LightShadows.Soft;
-        lightGo.transform.rotation = Quaternion.Euler(44f, -38f, 0f);
+        lightGo.transform.rotation = Quaternion.Euler(46f, -35f, 0f);
 
-        GameObject rimGo = new GameObject("Moonlight Fill Light");
+        GameObject rimGo = new GameObject("Sky Bounce Fill Light");
         Light rim = rimGo.AddComponent<Light>();
         rim.type = LightType.Directional;
         rim.color = Palette.RimLightCool;
-        rim.intensity = 0.62f;
+        rim.intensity = 0.72f;
         rim.shadows = LightShadows.None;
-        rimGo.transform.rotation = Quaternion.Euler(28f, 142f, 0f);
+        rimGo.transform.rotation = Quaternion.Euler(30f, 145f, 0f);
     }
 
     static void SetupGlobalVolume()
@@ -251,29 +261,29 @@ public static class BuildAetherfall
 
         Tonemapping tone = profile.Add<Tonemapping>(true);
         tone.mode.overrideState = true;
-        tone.mode.value = TonemappingMode.ACES;
+        tone.mode.value = TonemappingMode.Neutral;
 
         Bloom bloom = profile.Add<Bloom>(true);
         bloom.threshold.overrideState = true;
         bloom.threshold.value = 1.15f;
         bloom.intensity.overrideState = true;
-        bloom.intensity.value = 0.38f;
+        bloom.intensity.value = 0.34f;
         bloom.scatter.overrideState = true;
-        bloom.scatter.value = 0.65f;
+        bloom.scatter.value = 0.60f;
 
         Vignette vig = profile.Add<Vignette>(true);
         vig.intensity.overrideState = true;
-        vig.intensity.value = 0.22f;
+        vig.intensity.value = 0.14f;
         vig.smoothness.overrideState = true;
-        vig.smoothness.value = 0.35f;
+        vig.smoothness.value = 0.45f;
         vig.color.overrideState = true;
         vig.color.value = Palette.AbyssShadow;
 
         ColorAdjustments colorAdj = profile.Add<ColorAdjustments>(true);
         colorAdj.postExposure.overrideState = true;
-        colorAdj.postExposure.value = 0.28f;
+        colorAdj.postExposure.value = 0.22f;
         colorAdj.saturation.overrideState = true;
-        colorAdj.saturation.value = 14f;
+        colorAdj.saturation.value = 22f;
         colorAdj.contrast.overrideState = true;
         colorAdj.contrast.value = 10f;
 
@@ -327,17 +337,102 @@ public static class BuildAetherfall
         }
     }
 
+    static void BuildSkySeaAndFloatingIslands(Transform parent, Dictionary<string, Material> mats)
+    {
+        // Bright Turquoise Sky-Sea far below the floating citadel
+        GameObject skySea = GameObject.CreatePrimitive(PrimitiveType.Plane);
+        skySea.name = "CartoonSkySea";
+        skySea.transform.SetParent(parent, false);
+        skySea.transform.position = new Vector3(0f, -7.8f, 28f);
+        skySea.transform.localScale = new Vector3(32f, 1f, 32f);
+        Object.DestroyImmediate(skySea.GetComponent<Collider>());
+        skySea.GetComponent<Renderer>().sharedMaterial = mats["Mat_SkySeaTurquoise"];
+
+        // Decorative Flanking Sky-Islands with Trees & Crystals
+        var islands = new (Vector3 pos, float scale, bool hasTree, bool hasPillar)[]
+        {
+            (new Vector3(-16.5f, -0.8f, -4.0f), 7.5f, true, false),
+            (new Vector3(17.0f, 0.4f, 4.5f), 8.2f, true, true),
+            (new Vector3(-18.0f, 1.2f, 14.5f), 6.5f, false, true),
+            (new Vector3(16.5f, -0.5f, 24.0f), 8.0f, true, false),
+            (new Vector3(-17.0f, 0.8f, 33.0f), 7.5f, true, true),
+            (new Vector3(18.5f, 1.4f, 44.0f), 6.8f, true, false),
+            (new Vector3(-17.5f, 0.5f, 54.0f), 8.5f, true, true),
+            (new Vector3(17.5f, 1.0f, 60.0f), 8.0f, true, false)
+        };
+
+        foreach (var isl in islands)
+        {
+            GameObject islandBase = InstantiateFbx("Env_FloatingIslandBase.fbx", isl.pos, Quaternion.Euler(0f, isl.pos.z * 7f, 0f), parent, mats);
+            islandBase.transform.localScale = new Vector3(isl.scale, isl.scale * 0.55f, isl.scale);
+
+            if (isl.hasTree)
+            {
+                GameObject tree = InstantiateFbx("Env_CartoonTree.fbx", isl.pos + new Vector3(-0.8f, 0.05f, 0.4f), Quaternion.Euler(0f, isl.pos.x * 13f, 0f), parent, mats);
+                tree.transform.localScale = Vector3.one * 1.15f;
+            }
+            if (isl.hasPillar)
+            {
+                InstantiateFbx("Env_RuinedPillar.fbx", isl.pos + new Vector3(1.1f, 0.05f, -0.6f), Quaternion.identity, parent, mats);
+            }
+            InstantiateFbx("Env_CrystalCluster.fbx", isl.pos + new Vector3(0.4f, 0.05f, 1.0f), Quaternion.Euler(0f, isl.pos.z * 11f, 0f), parent, mats);
+        }
+
+        // Puffy Cartoon Clouds floating beneath the islands
+        Vector3[] cloudSpots =
+        {
+            new Vector3(-11f, -4.4f, -10f), new Vector3(12f, -4.8f, -2f),
+            new Vector3(-13f, -4.2f, 12f), new Vector3(13f, -4.5f, 20f),
+            new Vector3(-12f, -4.6f, 38f), new Vector3(12f, -4.2f, 50f),
+            new Vector3(0f, -5.0f, 70f)
+        };
+        foreach (Vector3 cPos in cloudSpots)
+        {
+            GameObject cloudRoot = new GameObject("CartoonCloud");
+            cloudRoot.transform.SetParent(parent, false);
+            cloudRoot.transform.position = cPos;
+            for (int p = 0; p < 3; p++)
+            {
+                GameObject puff = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                puff.name = $"CloudPuff_{p}";
+                puff.transform.SetParent(cloudRoot.transform, false);
+                puff.transform.localPosition = new Vector3((p - 1) * 1.6f, p == 1 ? 0.35f : 0f, (p % 2) * 0.6f);
+                puff.transform.localScale = new Vector3(3.0f, 1.6f, 2.5f);
+                Object.DestroyImmediate(puff.GetComponent<Collider>());
+                puff.GetComponent<Renderer>().sharedMaterial = mats["Mat_CloudWhite"];
+            }
+        }
+    }
+
     static void BuildChamberFloor(Transform parent, string name, float centerZ, float minZ, float maxZ, float minX, float maxX, Dictionary<string, Material> mats)
     {
         GameObject chamber = new GameObject(name);
         chamber.transform.SetParent(parent, false);
 
+        // Lush Grassy Island Skirt + Cliff Base underneath chamber
+        GameObject island = InstantiateFbx("Env_FloatingIslandBase.fbx", new Vector3(0f, -0.08f, centerZ), Quaternion.identity, chamber.transform, mats);
+        island.transform.localScale = new Vector3(20.5f, 4.0f, 20.5f);
+
+        int ix = 0;
         for (float x = minX; x <= maxX; x += 2f)
         {
+            int iz = 0;
             for (float z = minZ; z <= maxZ; z += 2f)
             {
-                InstantiateFbx("Env_SanctumTile.fbx", new Vector3(x, 0f, z), Quaternion.identity, chamber.transform, mats);
+                GameObject tile = InstantiateFbx("Env_SanctumTile.fbx", new Vector3(x, 0f, z), Quaternion.identity, chamber.transform, mats);
+                bool isCenterCarpet = Mathf.Abs(x) < 0.5f;
+                bool checkerAlt = ((ix + iz) % 2) == 1;
+                Renderer stoneRend = FindChildRecursive(tile.transform, "StoneBase")?.GetComponent<Renderer>();
+                if (stoneRend != null)
+                {
+                    if (isCenterCarpet)
+                        stoneRend.sharedMaterial = mats["Mat_HeroCrimson"];
+                    else if (checkerAlt)
+                        stoneRend.sharedMaterial = mats["Mat_SandTileAlt"];
+                }
+                iz++;
             }
+            ix++;
         }
 
         // Solid floor collider for smooth raycast & footing
@@ -360,6 +455,9 @@ public static class BuildAetherfall
                 InstantiateFbx("Env_SanctumTile.fbx", new Vector3(x, 0f, z), Quaternion.identity, bridge.transform, mats);
             }
         }
+
+        // Ornate Cartoon Castle Archway at bridge entrance
+        InstantiateFbx("Env_CastleArchway.fbx", new Vector3(0f, 0f, minZ + 0.4f), Quaternion.identity, bridge.transform, mats);
 
         GameObject colGo = new GameObject($"{name}_Collider");
         colGo.transform.SetParent(bridge.transform, false);
@@ -397,10 +495,10 @@ public static class BuildAetherfall
         {
             Vector3[] pillarOffsets =
             {
-                new Vector3(-7.6f, 0f, zc - 7.6f),
-                new Vector3(7.6f, 0f, zc - 7.6f),
-                new Vector3(-7.6f, 0f, zc + 7.6f),
-                new Vector3(7.6f, 0f, zc + 7.6f)
+                new Vector3(-7.8f, 0f, zc - 7.8f),
+                new Vector3(7.8f, 0f, zc - 7.8f),
+                new Vector3(-7.8f, 0f, zc + 7.8f),
+                new Vector3(7.8f, 0f, zc + 7.8f)
             };
             foreach (Vector3 p in pillarOffsets)
             {
@@ -408,6 +506,28 @@ public static class BuildAetherfall
                 BoxCollider bc = pil.AddComponent<BoxCollider>();
                 bc.center = new Vector3(0f, 1.8f, 0f);
                 bc.size = new Vector3(1.2f, 3.6f, 1.2f);
+            }
+
+            // Lush Cartoon Trees & Glowing Crystal Clusters on chamber corners
+            Vector3[] treeOffsets =
+            {
+                new Vector3(-9.2f, 0f, zc - 5.2f),
+                new Vector3(9.2f, 0f, zc + 5.2f)
+            };
+            foreach (Vector3 tPos in treeOffsets)
+            {
+                GameObject tree = InstantiateFbx("Env_CartoonTree.fbx", tPos, Quaternion.Euler(0f, tPos.z * 9f, 0f), parent, mats);
+                tree.transform.localScale = Vector3.one * 1.1f;
+            }
+
+            Vector3[] crystalOffsets =
+            {
+                new Vector3(8.9f, 0f, zc - 5.5f),
+                new Vector3(-8.9f, 0f, zc + 5.5f)
+            };
+            foreach (Vector3 cPos in crystalOffsets)
+            {
+                InstantiateFbx("Env_CrystalCluster.fbx", cPos, Quaternion.Euler(0f, cPos.x * 11f, 0f), parent, mats);
             }
 
             Vector3[] brazierOffsets =
@@ -426,8 +546,8 @@ public static class BuildAetherfall
                 Light pt = lightGo.AddComponent<Light>();
                 pt.type = LightType.Point;
                 pt.color = Palette.FireAmber;
-                pt.intensity = 7.5f;
-                pt.range = 9.5f;
+                pt.intensity = 6.0f;
+                pt.range = 9.0f;
                 pt.shadows = LightShadows.None;
             }
         }

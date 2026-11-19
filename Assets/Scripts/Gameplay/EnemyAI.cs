@@ -63,8 +63,8 @@ namespace Aetherfall.Gameplay
             _overheadLabel.alignment = TextAlignmentOptions.Center;
             _overheadLabel.fontSize = 2.25f;
             _overheadLabel.fontStyle = FontStyles.Bold;
-            _overheadLabel.outlineWidth = 0.22f;
-            _overheadLabel.outlineColor = Palette.AbyssShadow;
+            _overheadLabel.outlineWidth = 0.28f;
+            _overheadLabel.outlineColor = Palette.ObsidianArmor;
             _overheadLabel.color = Palette.IvoryCloth;
         }
 
@@ -82,7 +82,7 @@ namespace Aetherfall.Gameplay
             else if (IsProne) statusTag = " [PRONE]";
             string postureStr = new string('*', Mathf.Max(0, CurrentPosture));
             _overheadLabel.text = $"{DisplayName}\nHP {CurrentHP}/{MaxHP} | BRK [{postureStr}]{statusTag}";
-            _overheadLabel.color = IsStunned ? Palette.LightningCyan : (IsProne ? Palette.FrostIce : Palette.IvoryCloth);
+            _overheadLabel.color = IsStunned ? Palette.LightningCyan : (IsProne ? Palette.FrostIce : Palette.FiligreeGold);
         }
 
         public void ApplyStatus(bool stunned, bool prone)

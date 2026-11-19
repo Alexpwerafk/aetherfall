@@ -32,6 +32,6 @@ Material:
     - _BaseColor: {r: 0.54901963, g: 0.95686275, b: 1, a: 1}
     - _EmissionColor: {r: 0.76862746, g: 1.3396078, b: 1.4, a: 1.4}
     - _RimColor: {r: 0.15686275, g: 0.5019608, b: 1, a: 1}
-    - _ShadowTint: {r: 0.0627451, g: 0.07450981, b: 0.11764706, a: 1}
+    - _ShadowTint: {r: 0.32156864, g: 0.39215687, b: 0.61960787, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

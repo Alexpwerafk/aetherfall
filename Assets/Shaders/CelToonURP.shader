@@ -95,11 +95,11 @@ Shader "Aetherfall/CelToonURP"
                 half mainBand = QuantizeToon(ndl * shadow);
 
                 half3 litColor = _BaseColor.rgb * mainLight.color;
-                half3 shadowColor = _BaseColor.rgb * _ShadowTint.rgb * 1.45h + _ShadowTint.rgb * 0.25h;
+                half3 shadowColor = lerp(_BaseColor.rgb * 0.62h, _ShadowTint.rgb, 0.35h) * mainLight.color;
                 half3 color = lerp(shadowColor, litColor, mainBand);
 
                 // Ambient gradient bounce
-                half3 ambient = SampleSH(N) * _BaseColor.rgb * 0.45h;
+                half3 ambient = SampleSH(N) * _BaseColor.rgb * 0.55h;
                 color += ambient;
 
                 // Additional point/spot lights (braziers, spell lights)

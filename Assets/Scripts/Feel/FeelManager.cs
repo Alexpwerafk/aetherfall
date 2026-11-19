@@ -133,8 +133,8 @@ namespace Aetherfall.Feel
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.fontSize = 4.6f;
             tmp.fontStyle = FontStyles.Bold;
-            tmp.outlineWidth = 0.24f;
-            tmp.outlineColor = Palette.AbyssShadow;
+            tmp.outlineWidth = 0.28f;
+            tmp.outlineColor = Palette.ObsidianArmor;
             tmp.textWrappingMode = TextWrappingModes.NoWrap;
             return tmp;
         }
