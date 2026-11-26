@@ -52,7 +52,7 @@ namespace Aetherfall.Gameplay
 
             VfxPoolManager.Instance?.SpawnResonanceBurst(transform.position);
             SynthAudioManager.Instance?.PlayParryBell();
-            FeelManager.Instance?.SpawnFloatingText(transform.position, "RUNE ACTIVATED!", Palette.FiligreeGold, 1.1f);
+            FeelManager.Instance?.SpawnFloatingText(transform.position, "¡RUNA ACTIVADA!", Palette.FiligreeGold, 1.1f);
             OnActivated?.Invoke(this);
         }
     }

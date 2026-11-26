@@ -58,7 +58,7 @@ namespace Aetherfall.Gameplay
             if (AreBothSwitchesActivated() && _chamberCleared[2])
                 UnlockBarrier(2);
             else if (AreBothSwitchesActivated())
-                FeelManager.Instance?.SpawnFloatingText(sw.transform.position, "SANCTUM SEAL WEAKENED!", Palette.FiligreeGold, 1.15f);
+                FeelManager.Instance?.SpawnFloatingText(sw.transform.position, "¡SELLO DEL SANTUARIO DEBILITADO!", Palette.FiligreeGold, 1.15f);
         }
 
         bool AreBothSwitchesActivated()
@@ -104,8 +104,8 @@ namespace Aetherfall.Gameplay
             GameLoop.Instance.SetState(GameState.TacticalPlayerTurn);
             HeroController.Instance?.StartTurn();
 
-            string title = chamberIndex == 1 ? "CHAMBER 1: THE SHATTERED COURTYARD" :
-                (chamberIndex == 2 ? "CHAMBER 2: ALCHEMIST'S FLOODED HALL" : "CHAMBER 3: THRONE OF THE ECLIPSE!");
+            string title = chamberIndex == 1 ? "CÁMARA 1: EL PATIO QUEBRADO" :
+                (chamberIndex == 2 ? "CÁMARA 2: SALA INUNDADA DEL ALQUIMISTA" : "¡CÁMARA 3: TRONO DEL ECLIPSE!");
             FeelManager.Instance?.SpawnFloatingText(HeroController.Instance.transform.position, title, Palette.FiligreeGold, 1.3f);
             SynthAudioManager.Instance?.PlayChestFanfare();
         }
@@ -203,20 +203,20 @@ namespace Aetherfall.Gameplay
             _currentDraftChoices.Add(new BoonOption
             {
                 Id = "TempestRiposte",
-                Title = "TEMPEST RIPOSTE",
-                Description = "Perfect Parries deal +60% counter damage and electrify the floor."
+                Title = "RÉPLICA TEMPESTUOSA",
+                Description = "Los Parries perfectos infligen +60% de daño de contraataque y electrifican el suelo."
             });
             _currentDraftChoices.Add(new BoonOption
             {
                 Id = "AlchemistStride",
-                Title = "ALCHEMIST'S STRIDE",
-                Description = "Dodging drops an Oil puddle behind you and refunds +1 AP."
+                Title = "PASO DEL ALQUIMISTA",
+                Description = "Esquivar deja un charco de Aceite detrás de ti y recupera +1 PA."
             });
             _currentDraftChoices.Add(new BoonOption
             {
                 Id = "ChronoResonance",
-                Title = "CHRONO RESONANCE",
-                Description = "Perfect Resonance strikes unleash an immediate Chrono Echo hit."
+                Title = "CRONO RESONANCIA",
+                Description = "Los golpes de Resonancia Perfecta desatan un Eco Crono adicional al instante."
             });
 
             SynthAudioManager.Instance?.PlayLevelUpSting();
@@ -241,7 +241,7 @@ namespace Aetherfall.Gameplay
             GameLoop.Instance.NotifyStatsChanged();
             GameLoop.Instance.SetState(GameState.Exploring);
             if (HeroController.Instance != null)
-                FeelManager.Instance?.SpawnFloatingText(HeroController.Instance.transform.position, "BOON ATTUNED! ADVANCE FORWARD", Palette.FiligreeGold, 1.2f);
+                FeelManager.Instance?.SpawnFloatingText(HeroController.Instance.transform.position, "¡BENDICIÓN SINTONIZADA! AVANZA", Palette.FiligreeGold, 1.2f);
         }
     }
 }

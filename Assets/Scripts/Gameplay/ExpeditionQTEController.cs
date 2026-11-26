@@ -94,7 +94,7 @@ namespace Aetherfall.Gameplay
         {
             _queuedPerfectResonance = false;
             IsAttackQTEActive = true;
-            ActiveBannerText = "RESONANCE QTE: PRESS [SPACE / LMB] ON GOLDEN RING!";
+            ActiveBannerText = "¡RESONANCIA! PULSA [ESPACIO / CLIC IZQ.] EN EL ANILLO DORADO";
 
             if (TacticalCameraDirector.Instance != null && targetTransform != null)
                 TacticalCameraDirector.Instance.FocusDuel(hero.transform, targetTransform, enemyAttacking: false);
@@ -139,7 +139,7 @@ namespace Aetherfall.Gameplay
                 VfxPoolManager.Instance?.SpawnResonanceBurst(targetTransform != null ? targetTransform.position : hero.transform.position);
                 FeelManager.Instance?.SpawnFloatingText(
                     hero.transform.position,
-                    "PERFECT RESONANCE! +1 AP",
+                    "¡RESONANCIA PERFECTA! +1 PA",
                     Palette.FiligreeGold,
                     1.25f);
             }
@@ -157,7 +157,7 @@ namespace Aetherfall.Gameplay
             _queuedParry = false;
             _queuedDodge = false;
             IsDefenseQTEActive = true;
-            ActiveBannerText = "INCOMING STRIKE! [E / RMB] PARRY  |  [SPACE] DODGE";
+            ActiveBannerText = "¡ATAQUE ENTRANTE! [E / CLIC DER.] PARRY   ·   [ESPACIO] ESQUIVAR";
 
             if (TacticalCameraDirector.Instance != null && attacker != null)
                 TacticalCameraDirector.Instance.FocusDuel(hero.transform, attacker.transform, enemyAttacking: true);
@@ -184,7 +184,7 @@ namespace Aetherfall.Gameplay
                     else
                     {
                         // Early parry misses timing!
-                        FeelManager.Instance?.SpawnFloatingText(hero.transform.position, "PARRY TOO EARLY!", Palette.HeroCrimson, 0.95f);
+                        FeelManager.Instance?.SpawnFloatingText(hero.transform.position, "¡PARRY MUY PRONTO!", Palette.HeroCrimson, 0.95f);
                         resolved = true;
                     }
                 }
@@ -217,7 +217,7 @@ namespace Aetherfall.Gameplay
                 FeelManager.Instance?.TriggerHitStop(0.085f);
                 FeelManager.Instance?.TriggerShake(0.75f);
                 VfxPoolManager.Instance?.SpawnParryShockwave(hero.transform.position);
-                FeelManager.Instance?.SpawnFloatingText(hero.transform.position, "PERFECT PARRY! RIPOSTE!", Palette.LightningCyan, 1.3f);
+                FeelManager.Instance?.SpawnFloatingText(hero.transform.position, "¡PARRY PERFECTO! ¡CONTRAATAQUE!", Palette.LightningCyan, 1.3f);
 
                 yield return new WaitForSecondsRealtime(0.18f);
 
@@ -239,7 +239,7 @@ namespace Aetherfall.Gameplay
             {
                 SynthAudioManager.Instance?.PlayDodgeWhoosh();
                 VfxPoolManager.Instance?.SpawnFootstep(hero.transform.position);
-                FeelManager.Instance?.SpawnFloatingText(hero.transform.position, "CLEAN DODGE!", Palette.FrostIce, 1.1f);
+                FeelManager.Instance?.SpawnFloatingText(hero.transform.position, "¡ESQUIVA LIMPIA!", Palette.FrostIce, 1.1f);
                 Vector3 dodgeOffset = hero.transform.right * 1.1f;
                 hero.transform.position += dodgeOffset;
 

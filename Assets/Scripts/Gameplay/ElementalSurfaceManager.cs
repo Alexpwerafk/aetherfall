@@ -157,7 +157,7 @@ namespace Aetherfall.Gameplay
             VfxPoolManager.Instance?.SpawnFireExplosion(center);
             SynthAudioManager.Instance?.PlayElementalReaction("Fire");
             FeelManager.Instance?.TriggerShake(0.75f);
-            FeelManager.Instance?.SpawnFloatingText(center, "OIL + FIRE! IGNITED!", Palette.FireAmber, 1.25f);
+            FeelManager.Instance?.SpawnFloatingText(center, "¡ACEITE + FUEGO! ¡IGNICIÓN!", Palette.FireAmber, 1.25f);
 
             if (GameLoop.Instance != null)
             {
@@ -180,7 +180,7 @@ namespace Aetherfall.Gameplay
             VfxPoolManager.Instance?.SpawnLightningArc(center);
             SynthAudioManager.Instance?.PlayElementalReaction("Lightning");
             FeelManager.Instance?.TriggerShake(0.55f);
-            FeelManager.Instance?.SpawnFloatingText(center, "WATER + LIGHTNING! STUNNED!", Palette.LightningCyan, 1.2f);
+            FeelManager.Instance?.SpawnFloatingText(center, "¡AGUA + RAYO! ¡ATURDIDO!", Palette.LightningCyan, 1.2f);
 
             if (GameLoop.Instance != null)
             {
@@ -205,7 +205,7 @@ namespace Aetherfall.Gameplay
             surf.SetSurfaceType(SurfaceType.Ice, 3);
             VfxPoolManager.Instance?.SpawnFrostShatter(center);
             SynthAudioManager.Instance?.PlayElementalReaction("Frost");
-            FeelManager.Instance?.SpawnFloatingText(center, "WATER + FROST! PRONE!", Palette.FrostIce, 1.2f);
+            FeelManager.Instance?.SpawnFloatingText(center, "¡AGUA + HIELO! ¡DERRIBADO!", Palette.FrostIce, 1.2f);
 
             if (GameLoop.Instance != null)
             {
@@ -242,16 +242,16 @@ namespace Aetherfall.Gameplay
                 {
                     case SurfaceType.Fire:
                         enemy.TakeDamage(18, ElementType.Fire, false);
-                        FeelManager.Instance?.SpawnFloatingText(pos, "BURNING!", Palette.FireAmber);
+                        FeelManager.Instance?.SpawnFloatingText(pos, "¡ARDIENDO!", Palette.FireAmber);
                         break;
                     case SurfaceType.ElectrifiedWater:
                         enemy.TakeDamage(16, ElementType.Lightning, false);
                         enemy.ApplyStatus(stunned: true, prone: false);
-                        FeelManager.Instance?.SpawnFloatingText(pos, "SHOCKED!", Palette.LightningCyan);
+                        FeelManager.Instance?.SpawnFloatingText(pos, "¡ELECTROCUTADO!", Palette.LightningCyan);
                         break;
                     case SurfaceType.Ice:
                         enemy.ApplyStatus(stunned: false, prone: true);
-                        FeelManager.Instance?.SpawnFloatingText(pos, "SLIPPED! PRONE", Palette.FrostIce);
+                        FeelManager.Instance?.SpawnFloatingText(pos, "¡RESBALÓN! DERRIBADO", Palette.FrostIce);
                         break;
                 }
             }

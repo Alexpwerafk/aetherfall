@@ -599,17 +599,17 @@ public static class BuildAetherfall
     static void SpawnChamberEnemies(Dictionary<string, Material> mats)
     {
         // Chamber 1: 2 Corrupted Vanguards (one near Abyss edge, one near Oil Barrel)
-        SpawnEnemy("Enemy_CorruptedVanguard.fbx", "Corrupted Vanguard", EnemyArchetype.CorruptedVanguard, 1, new Vector3(-3.2f, 0f, 2.5f), 55, 16, 2, 45, mats);
-        SpawnEnemy("Enemy_CorruptedVanguard.fbx", "Ledge Sentinel", EnemyArchetype.CorruptedVanguard, 1, new Vector3(5.8f, 0f, 3.0f), 55, 16, 2, 45, mats);
+        SpawnEnemy("Enemy_CorruptedVanguard.fbx", "Vanguardia Corrupta", EnemyArchetype.CorruptedVanguard, 1, new Vector3(-3.2f, 0f, 2.5f), 55, 16, 2, 45, mats);
+        SpawnEnemy("Enemy_CorruptedVanguard.fbx", "Centinela del Abismo", EnemyArchetype.CorruptedVanguard, 1, new Vector3(5.8f, 0f, 3.0f), 55, 16, 2, 45, mats);
 
         // Chamber 2: 2 Arcane Alchemists + 1 Vanguard near Water canals
-        SpawnEnemy("Enemy_CorruptedVanguard.fbx", "Sanctum Warden", EnemyArchetype.CorruptedVanguard, 2, new Vector3(0f, 0f, 25.5f), 75, 18, 3, 55, mats);
-        SpawnEnemy("Enemy_ArcaneAlchemist.fbx", "Arcane Alchemist", EnemyArchetype.ArcaneAlchemist, 2, new Vector3(-4.2f, 0f, 30.5f), 60, 20, 2, 55, mats);
-        SpawnEnemy("Enemy_ArcaneAlchemist.fbx", "Storm Alchemist", EnemyArchetype.ArcaneAlchemist, 2, new Vector3(4.2f, 0f, 30.5f), 60, 20, 2, 55, mats);
+        SpawnEnemy("Enemy_CorruptedVanguard.fbx", "Guardián del Santuario", EnemyArchetype.CorruptedVanguard, 2, new Vector3(0f, 0f, 25.5f), 75, 18, 3, 55, mats);
+        SpawnEnemy("Enemy_ArcaneAlchemist.fbx", "Alquimista Arcano", EnemyArchetype.ArcaneAlchemist, 2, new Vector3(-4.2f, 0f, 30.5f), 60, 20, 2, 55, mats);
+        SpawnEnemy("Enemy_ArcaneAlchemist.fbx", "Alquimista de Tormenta", EnemyArchetype.ArcaneAlchemist, 2, new Vector3(4.2f, 0f, 30.5f), 60, 20, 2, 55, mats);
 
         // Chamber 3 (Boss): Chrono-Inquisitor Malakor + Guard
-        SpawnEnemy("Enemy_ChronoInquisitorBoss.fbx", "Chrono-Inquisitor Malakor", EnemyArchetype.ChronoInquisitorBoss, 3, new Vector3(0f, 0f, 58.0f), 165, 24, 4, 150, mats);
-        SpawnEnemy("Enemy_CorruptedVanguard.fbx", "Eclipse Guard", EnemyArchetype.CorruptedVanguard, 3, new Vector3(-4.5f, 0f, 54.0f), 70, 18, 2, 50, mats);
+        SpawnEnemy("Enemy_ChronoInquisitorBoss.fbx", "Crono-Inquisidor Malakor", EnemyArchetype.ChronoInquisitorBoss, 3, new Vector3(0f, 0f, 58.0f), 165, 24, 4, 150, mats);
+        SpawnEnemy("Enemy_CorruptedVanguard.fbx", "Guardia del Eclipse", EnemyArchetype.CorruptedVanguard, 3, new Vector3(-4.5f, 0f, 54.0f), 70, 18, 2, 50, mats);
     }
 
     static void SpawnEnemy(string fbx, string displayName, EnemyArchetype type, int chamber, Vector3 pos, int hp, int dmg, int posture, int xp, Dictionary<string, Material> mats)
@@ -642,7 +642,7 @@ public static class BuildAetherfall
         SpawnSurface(parent, new Vector3(-3.0f, 0.03f, 2.2f), SurfaceType.Oil, 2.8f, 6, mats);
         SpawnBarrel(parent, new Vector3(-1.8f, 0f, 3.6f), mats);
         SpawnBarrel(parent, new Vector3(3.4f, 0f, 1.2f), mats);
-        SpawnChest(parent, new Vector3(-6.2f, 0f, -2.5f), WeaponType.StormHalberd, "Stormcaller Halberd [Lightning]", mats);
+        SpawnChest(parent, new Vector3(-6.2f, 0f, -2.5f), WeaponType.StormHalberd, "Alabarda de Tormenta [Rayo]", mats);
 
         // Chamber 2: Water puddles + Spike Traps + 2 Rune Crystal Switches + Frost Chest
         SpawnSurface(parent, new Vector3(-4.0f, 0.03f, 30.0f), SurfaceType.Water, 3.0f, 8, mats);
@@ -651,7 +651,7 @@ public static class BuildAetherfall
         SpawnTrap(parent, new Vector3(2.5f, 0f, 26.5f), mats);
         SpawnCrystalSwitch(parent, new Vector3(-6.2f, 0f, 34.0f), 0, mats);
         SpawnCrystalSwitch(parent, new Vector3(6.2f, 0f, 34.0f), 1, mats);
-        SpawnChest(parent, new Vector3(6.4f, 0f, 23.0f), WeaponType.FrostRuneblade, "Frost Runeblade [Frost]", mats);
+        SpawnChest(parent, new Vector3(6.4f, 0f, 23.0f), WeaponType.FrostRuneblade, "Hoja Rúnica Glacial [Hielo]", mats);
 
         // Chamber 3 (Boss Arena): Barrels + Oil & Water surfaces
         SpawnSurface(parent, new Vector3(-4.0f, 0.03f, 55.5f), SurfaceType.Oil, 2.8f, 8, mats);

@@ -32,7 +32,7 @@ namespace Aetherfall.Gameplay
             _coolingDown = true;
             SynthAudioManager.Instance?.PlaySlash();
             FeelManager.Instance?.TriggerShake(0.45f);
-            FeelManager.Instance?.SpawnFloatingText(transform.position, "IMPALED BY TRAP!", Palette.HeroCrimson, 1.15f);
+            FeelManager.Instance?.SpawnFloatingText(transform.position, "¡EMPALADO POR TRAMPA!", Palette.HeroCrimson, 1.15f);
 
             if (SpikesTransform != null)
             {

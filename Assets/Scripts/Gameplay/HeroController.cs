@@ -161,9 +161,9 @@ namespace Aetherfall.Gameplay
         {
             switch (EquippedWeapon)
             {
-                case WeaponType.SolarGreatsword: return "Solar Greatsword (Fire)";
-                case WeaponType.StormHalberd: return "Storm Halberd (Lightning)";
-                default: return "Frost Runeblade (Frost)";
+                case WeaponType.SolarGreatsword: return "Espadón Solar · Fuego";
+                case WeaponType.StormHalberd: return "Alabarda de Tormenta · Rayo";
+                default: return "Hoja Rúnica Glacial · Hielo";
             }
         }
 
@@ -536,7 +536,7 @@ namespace Aetherfall.Gameplay
 
             if (CurrentAP <= 0)
             {
-                FeelManager.Instance?.SpawnFloatingText(transform.position, "NO AP LEFT! END TURN", Palette.HeroCrimson);
+                FeelManager.Instance?.SpawnFloatingText(transform.position, "¡SIN PA! TERMINA EL TURNO", Palette.HeroCrimson);
                 return;
             }
 
@@ -547,7 +547,7 @@ namespace Aetherfall.Gameplay
                     if (target != null && Vector3.Distance(transform.position, target.position) <= 4.2f)
                         ExecuteStrikeOn(target);
                     else
-                        FeelManager.Instance?.SpawnFloatingText(transform.position, "MOVE CLOSER OR USE [3] SHOT!", Palette.FiligreeGold);
+                        FeelManager.Instance?.SpawnFloatingText(transform.position, "¡ACÉRCATE O USA [3] DISPARO!", Palette.FiligreeGold);
                     break;
 
                 case TacticalActionMode.Flask:
@@ -565,7 +565,7 @@ namespace Aetherfall.Gameplay
                     if (hitEnemy != null && !hitEnemy.IsDead && Vector3.Distance(transform.position, hitEnemy.transform.position) <= 4.0f)
                         ExecuteShoveOn(hitEnemy);
                     else
-                        FeelManager.Instance?.SpawnFloatingText(transform.position, "CLICK AN ADJACENT ENEMY!", Palette.FiligreeGold);
+                        FeelManager.Instance?.SpawnFloatingText(transform.position, "¡HAZ CLIC EN UN ENEMIGO CERCANO!", Palette.FiligreeGold);
                     break;
             }
         }
@@ -606,7 +606,7 @@ namespace Aetherfall.Gameplay
                 if (perfect && GameLoop.Instance != null && GameLoop.Instance.BoonChronoResonance && !enemy.IsDead)
                 {
                     yield return new WaitForSecondsRealtime(0.16f);
-                    FeelManager.Instance?.SpawnFloatingText(enemy.transform.position, "CHRONO ECHO!", Palette.LightningCyan, 1.15f);
+                    FeelManager.Instance?.SpawnFloatingText(enemy.transform.position, "¡ECO CRONO!", Palette.LightningCyan, 1.15f);
                     enemy.TakeDamage(16, CurrentElement, true);
                 }
             }
@@ -655,7 +655,7 @@ namespace Aetherfall.Gameplay
             yield return new WaitForSeconds(0.18f);
 
             ElementType flaskElem = FlaskThrowsOil ? ElementType.Oil : ElementType.Water;
-            string label = FlaskThrowsOil ? "OIL FLASK!" : "WATER FLASK!";
+            string label = FlaskThrowsOil ? "¡FRASCO DE ACEITE!" : "¡FRASCO DE AGUA!";
             Color col = FlaskThrowsOil ? Palette.FiligreeGold : Palette.WaterAzure;
             FeelManager.Instance?.SpawnFloatingText(point, label, col, 1.05f);
             ElementalSurfaceManager.Instance?.ApplyElementAt(point, 2.7f, flaskElem);
@@ -741,7 +741,7 @@ namespace Aetherfall.Gameplay
             Animator?.TriggerAttackSwing();
             SynthAudioManager.Instance?.PlayRiposteThunder();
             FeelManager.Instance?.TriggerShake(0.55f);
-            FeelManager.Instance?.SpawnFloatingText(enemy.transform.position, "TACTICAL SHOVE!", Palette.FiligreeGold, 1.2f);
+            FeelManager.Instance?.SpawnFloatingText(enemy.transform.position, "¡EMPUJÓN TÁCTICO!", Palette.FiligreeGold, 1.2f);
 
             float pushDist = (GameLoop.Instance != null && GameLoop.Instance.BoonColossalForce) ? 7.0f : 4.8f;
             Vector3 start = enemy.transform.position;
@@ -796,7 +796,7 @@ namespace Aetherfall.Gameplay
             Animator?.TriggerHitRecoil();
             FeelManager.Instance?.FlashObject(gameObject, Palette.HeroCrimson, 0.16f);
             FeelManager.Instance?.TriggerShake(0.55f);
-            FeelManager.Instance?.SpawnFloatingText(transform.position, $"-{dmg} HP", Palette.HeroCrimson, 1.15f);
+            FeelManager.Instance?.SpawnFloatingText(transform.position, $"-{dmg} PV", Palette.HeroCrimson, 1.15f);
             SynthAudioManager.Instance?.PlayHitTaken();
             GameLoop.Instance?.NotifyStatsChanged();
 
@@ -807,7 +807,7 @@ namespace Aetherfall.Gameplay
         public void Heal(int amount)
         {
             CurrentHP = Mathf.Min(MaxHP, CurrentHP + amount);
-            FeelManager.Instance?.SpawnFloatingText(transform.position, $"+{amount} HP", Palette.HealEmerald, 1.15f);
+            FeelManager.Instance?.SpawnFloatingText(transform.position, $"+{amount} PV", Palette.HealEmerald, 1.15f);
             GameLoop.Instance?.NotifyStatsChanged();
         }
 

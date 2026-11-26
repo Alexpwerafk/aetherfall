@@ -10,62 +10,95 @@ using Aetherfall.Gameplay;
 namespace Aetherfall.UI
 {
     /// <summary>
-    /// Complete Game Shell & Tactical HUD (ScreenSpaceCamera uGUI + TextMeshPro).
-    /// Styled strictly from Palette.cs with animated bars, AP pips, Expedition 33 QTE rings,
-    /// Roguelite Boon Draft cards, Pause Settings (MusicVol/SFXVol), and End Screen.
+    /// AAA Tactical RPG Game Shell & HUD (uGUI + TextMeshPro + Procedural SDF Vector Art).
+    /// 100% Spanish localized with chamfered ornamental frames, custom vector icons,
+    /// delayed HP damage trail, faceted AP crystal diamonds, hover-lift skill/boon cards,
+    /// and Expedition 33 active QTE resonance rings.
     /// </summary>
     public class GameShellUI : MonoBehaviour
     {
         public static GameShellUI Instance { get; private set; }
 
+        static readonly Color PanelDeepNavy = new Color(0.08f, 0.11f, 0.21f, 0.94f);
+        static readonly Color PanelCardNavy = new Color(0.13f, 0.17f, 0.30f, 0.96f);
+        static readonly Color PanelCardHover = new Color(0.20f, 0.25f, 0.42f, 0.98f);
+        static readonly Color PanelCardSelected = new Color(0.28f, 0.24f, 0.15f, 0.98f);
+        static readonly Color BarTrackDark = new Color(0.05f, 0.07f, 0.14f, 0.96f);
+        static readonly Color ScrimDark = new Color(0.04f, 0.06f, 0.13f, 0.80f);
+        static readonly Color MutedIvory = new Color(0.86f, 0.88f, 0.94f, 0.88f);
+
         Canvas _canvas;
-        Sprite _solidSprite;
-        Sprite _ringSprite;
 
+        // Title Screen
         GameObject _titlePanel;
-        TextMeshProUGUI _titlePromptText;
+        UnityEngine.UI.Image _titleGlowImg;
+        TextMeshProUGUI _titleSubPromptText;
+        UnityEngine.UI.Image _titleCtaGlow;
 
+        // Main HUD
         GameObject _hudPanel;
         TextMeshProUGUI _chamberHeaderText;
         TextMeshProUGUI _turnBannerText;
-        TextMeshProUGUI _objectiveHintText;
+        UnityEngine.UI.Image _turnAccentLine;
+        TextMeshProUGUI _controlsStripText;
 
-        Image _hpFillImg;
+        // Hero Vitals
+        UnityEngine.UI.Image _hpFillImg;
+        UnityEngine.UI.Image _hpTrailFillImg;
         TextMeshProUGUI _hpValueText;
-        Image _xpFillImg;
-        TextMeshProUGUI _levelText;
+        UnityEngine.UI.Image _xpFillImg;
+        TextMeshProUGUI _levelBadgeText;
         TextMeshProUGUI _weaponText;
+        UnityEngine.UI.Image _weaponDotImg;
+
+        // AP Crystal Rack
         TextMeshProUGUI _apValueText;
-        readonly List<Image> _apPips = new List<Image>();
+        readonly List<UnityEngine.UI.Image> _apPips = new List<UnityEngine.UI.Image>();
+        readonly List<UnityEngine.UI.Image> _apGlows = new List<UnityEngine.UI.Image>();
 
+        // Tactical Action Bar
         GameObject _tacticalBar;
-        Button _btnStrike;
-        Button _btnFlask;
+        GameObject _explorationCard;
+        UIJuiceButton _juiceStrike;
+        UIJuiceButton _juiceFlask;
+        UIJuiceButton _juiceShot;
+        UIJuiceButton _juiceShove;
         TextMeshProUGUI _btnFlaskLabel;
-        Button _btnShot;
-        Button _btnShove;
-        Button _btnEndTurn;
+        UnityEngine.UI.Image _btnFlaskIcon;
 
+        // QTE Overlay
         GameObject _qteOverlay;
         RectTransform _qteDynamicRing;
-        Image _qteDynamicRingImg;
-        Image _qteTargetRingImg;
+        UnityEngine.UI.Image _qteDynamicRingImg;
+        UnityEngine.UI.Image _qteTargetRingImg;
+        UnityEngine.UI.Image _qteCenterGlowImg;
         TextMeshProUGUI _qtePromptText;
 
+        // Boon Draft Modal
         GameObject _draftPanel;
-        readonly List<Button> _draftButtons = new List<Button>();
+        readonly List<TextMeshProUGUI> _draftTags = new List<TextMeshProUGUI>();
         readonly List<TextMeshProUGUI> _draftTitles = new List<TextMeshProUGUI>();
         readonly List<TextMeshProUGUI> _draftDescs = new List<TextMeshProUGUI>();
+        readonly List<UnityEngine.UI.Image> _draftIcons = new List<UnityEngine.UI.Image>();
+        readonly List<UnityEngine.UI.Image> _draftIconGlows = new List<UnityEngine.UI.Image>();
 
+        // Pause Modal
         GameObject _pausePanel;
-        Slider _musicSlider;
-        Slider _sfxSlider;
+        UnityEngine.UI.Slider _musicSlider;
+        UnityEngine.UI.Slider _sfxSlider;
+        TextMeshProUGUI _musicValText;
+        TextMeshProUGUI _sfxValText;
 
+        // End Screen
         GameObject _endPanel;
+        UnityEngine.UI.Image _endIconImg;
         TextMeshProUGUI _endTitleText;
-        TextMeshProUGUI _endStatsText;
+        TextMeshProUGUI _endSubtitleText;
+        TextMeshProUGUI _endStatsLeftText;
+        TextMeshProUGUI _endStatsRightText;
 
         float _displayedHpFill = 1f;
+        float _trailHpFill = 1f;
         float _displayedXpFill = 0f;
 
         void Awake()
@@ -76,7 +109,7 @@ namespace Aetherfall.UI
                 return;
             }
             Instance = this;
-            CreateProceduralSprites();
+            UIArtFactory.EnsureInitialized();
             BuildCanvasHierarchy();
         }
 
@@ -111,35 +144,6 @@ namespace Aetherfall.UI
             }
         }
 
-        void CreateProceduralSprites()
-        {
-            Texture2D tex = new Texture2D(4, 4, TextureFormat.RGBA32, false);
-            Color[] cols = new Color[16];
-            for (int i = 0; i < 16; i++) cols[i] = Color.white;
-            tex.SetPixels(cols);
-            tex.Apply();
-            _solidSprite = Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
-
-            const int size = 256;
-            Texture2D ringTex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            float half = size * 0.5f;
-            for (int y = 0; y < size; y++)
-            {
-                for (int x = 0; x < size; x++)
-                {
-                    float dx = (x - half) / half;
-                    float dy = (y - half) / half;
-                    float dist = Mathf.Sqrt(dx * dx + dy * dy);
-                    float alpha = (dist >= 0.80f && dist <= 0.96f) ? 1f : 0f;
-                    if (dist >= 0.76f && dist < 0.80f) alpha = Mathf.InverseLerp(0.76f, 0.80f, dist);
-                    else if (dist > 0.96f && dist <= 1.0f) alpha = Mathf.InverseLerp(1.0f, 0.96f, dist);
-                    ringTex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
-                }
-            }
-            ringTex.Apply();
-            _ringSprite = Sprite.Create(ringTex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
-        }
-
         void BuildCanvasHierarchy()
         {
             GameObject canvasGo = new GameObject("Aetherfall_ShellCanvas");
@@ -164,7 +168,9 @@ namespace Aetherfall.UI
             BuildEndScreen(canvasGo.transform);
         }
 
-        GameObject MakePanel(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 anchoredPos, Vector2 sizeDelta, Color bgColor, bool addBorder = true)
+        // ==================== UI BUILDER HELPERS ====================
+
+        static RectTransform MakeRect(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 pos, Vector2 size)
         {
             GameObject go = new GameObject(name);
             go.transform.SetParent(parent, false);
@@ -172,32 +178,49 @@ namespace Aetherfall.UI
             rt.anchorMin = anchorMin;
             rt.anchorMax = anchorMax;
             rt.pivot = pivot;
-            rt.anchoredPosition = anchoredPos;
-            rt.sizeDelta = sizeDelta;
-
-            Image img = go.AddComponent<Image>();
-            img.sprite = _solidSprite;
-            img.color = bgColor;
-            img.raycastTarget = false;
-
-            if (addBorder)
-            {
-                Outline outline = go.AddComponent<Outline>();
-                outline.effectColor = Palette.FiligreeGold;
-                outline.effectDistance = new Vector2(2f, -2f);
-            }
-            return go;
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = size;
+            return rt;
         }
 
-        TextMeshProUGUI MakeText(string name, Transform parent, string text, float size, Color color, TextAlignmentOptions align = TextAlignmentOptions.Center, FontStyles style = FontStyles.Bold)
+        static UnityEngine.UI.Image MakeImage(string name, Transform parent, Sprite sprite, Color color,
+            Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 pos, Vector2 size,
+            UnityEngine.UI.Image.Type imgType = UnityEngine.UI.Image.Type.Simple, bool raycast = false)
+        {
+            RectTransform rt = MakeRect(name, parent, anchorMin, anchorMax, pivot, pos, size);
+            UnityEngine.UI.Image img = rt.gameObject.AddComponent<UnityEngine.UI.Image>();
+            img.sprite = sprite;
+            img.color = color;
+            img.type = imgType;
+            img.raycastTarget = raycast;
+            return img;
+        }
+
+        static GameObject MakeChamferPanel(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot,
+            Vector2 pos, Vector2 size, Color bgColor, bool ornate = true, bool raycast = false)
+        {
+            Sprite spr = ornate ? UIArtFactory.ChamferPanel : UIArtFactory.ChamferPanelSoft;
+            UnityEngine.UI.Image img = MakeImage(name, parent, spr, bgColor, anchorMin, anchorMax, pivot, pos, size, UnityEngine.UI.Image.Type.Sliced, raycast);
+            return img.gameObject;
+        }
+
+        static UnityEngine.UI.Image MakeDivider(Transform parent, Vector2 pos, float width, Color color)
+        {
+            return MakeImage("GoldDivider", parent, UIArtFactory.GoldDivider, color,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                pos, new Vector2(width, 16f));
+        }
+
+        static TextMeshProUGUI MakeText(string name, Transform parent, string text, float size, Color color,
+            TextAlignmentOptions align = TextAlignmentOptions.Center, FontStyles style = FontStyles.Bold, float spacing = 2f)
         {
             GameObject go = new GameObject(name);
             go.transform.SetParent(parent, false);
             RectTransform rt = go.AddComponent<RectTransform>();
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.one;
-            rt.offsetMin = new Vector2(10f, 4f);
-            rt.offsetMax = new Vector2(-10f, -4f);
+            rt.offsetMin = new Vector2(8f, 4f);
+            rt.offsetMax = new Vector2(-8f, -4f);
 
             TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
             tmp.text = text;
@@ -205,50 +228,114 @@ namespace Aetherfall.UI
             tmp.color = color;
             tmp.alignment = align;
             tmp.fontStyle = style;
-            tmp.characterSpacing = 3f;
-            tmp.outlineWidth = 0.2f;
-            tmp.outlineColor = Palette.AbyssShadow;
+            tmp.characterSpacing = spacing;
+            tmp.outlineWidth = 0.18f;
+            tmp.outlineColor = new Color(0.03f, 0.05f, 0.10f, 0.95f);
             tmp.raycastTarget = false;
             return tmp;
         }
 
-        Button MakeButton(string name, Transform parent, string label, Vector2 anchoredPos, Vector2 size, Color bgColor, Color textColor, out TextMeshProUGUI labelOut)
+        static UnityEngine.UI.Button MakeActionButton(string name, Transform parent, string label, Vector2 pos, Vector2 size,
+            Color bgNormal, Color bgHover, Color textColor, Color glowColor, out UIJuiceButton juiceOut)
         {
-            GameObject go = MakePanel(name, parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), anchoredPos, size, bgColor, true);
-            Image img = go.GetComponent<Image>();
-            img.raycastTarget = true;
+            GameObject go = MakeChamferPanel(name, parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                pos, size, bgNormal, true, true);
 
-            Button btn = go.AddComponent<Button>();
-            ColorBlock cb = btn.colors;
-            cb.normalColor = Color.white;
-            cb.highlightedColor = new Color(1.18f, 1.12f, 1.0f, 1f);
-            cb.pressedColor = new Color(0.85f, 0.85f, 0.85f, 1f);
-            btn.colors = cb;
+            // Soft hover glow behind
+            UnityEngine.UI.Image glow = MakeImage("HoverGlow", go.transform, UIArtFactory.RadialGlow, new Color(glowColor.r, glowColor.g, glowColor.b, 0f),
+                Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(36f, 36f));
+            glow.transform.SetAsFirstSibling();
 
-            labelOut = MakeText("Label", go.transform, label, 20f, textColor);
+            UnityEngine.UI.Button btn = go.AddComponent<UnityEngine.UI.Button>();
+            btn.transition = Selectable.Transition.None;
+
+            juiceOut = go.AddComponent<UIJuiceButton>();
+            juiceOut.BackgroundImage = go.GetComponent<UnityEngine.UI.Image>();
+            juiceOut.GlowImage = glow;
+            juiceOut.NormalBg = bgNormal;
+            juiceOut.HoverBg = bgHover;
+            juiceOut.SelectedBg = bgHover;
+            juiceOut.GlowColor = new Color(glowColor.r, glowColor.g, glowColor.b, 0.45f);
+            juiceOut.HoverLiftY = 3f;
+            juiceOut.SetBasePosition(pos);
+
+            MakeText("Label", go.transform, label, 20f, textColor, TextAlignmentOptions.Center, FontStyles.Bold, 3f);
             return btn;
         }
 
+        // ==================== 1. PANTALLA DE TÍTULO ====================
+
         void BuildTitleScreen(Transform root)
         {
-            _titlePanel = MakePanel("TitlePanel", root, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero, new Color(0.04f, 0.05f, 0.09f, 0.35f), false);
+            _titlePanel = new GameObject("TitlePanel");
+            _titlePanel.transform.SetParent(root, false);
+            RectTransform tRt = _titlePanel.AddComponent<RectTransform>();
+            tRt.anchorMin = Vector2.zero;
+            tRt.anchorMax = Vector2.one;
+            tRt.offsetMin = Vector2.zero;
+            tRt.offsetMax = Vector2.zero;
 
-            GameObject card = MakePanel("TitleHeader", _titlePanel.transform, new Vector2(0.5f, 0.65f), new Vector2(0.5f, 0.65f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(960f, 220f), Palette.UiPanelBg, true);
-            TextMeshProUGUI mainTitle = MakeText("Title", card.transform, "AETHERFALL", 76f, Palette.FiligreeGold);
-            mainTitle.characterSpacing = 12f;
-            RectTransform mRt = mainTitle.rectTransform;
-            mRt.offsetMin = new Vector2(10f, 68f);
+            // Cinematic top & bottom framing gradients (keeps 3D sky-sanctum crystal clear in center!)
+            MakeImage("TopVignette", _titlePanel.transform, UIArtFactory.VignetteTop, new Color(0.04f, 0.06f, 0.14f, 0.72f),
+                new Vector2(0f, 0.62f), Vector2.one, new Vector2(0.5f, 1f), Vector2.zero, Vector2.zero);
+            MakeImage("BottomVignette", _titlePanel.transform, UIArtFactory.VignetteBottom, new Color(0.04f, 0.06f, 0.14f, 0.85f),
+                Vector2.zero, new Vector2(1f, 0.36f), new Vector2(0.5f, 0f), Vector2.zero, Vector2.zero);
 
-            TextMeshProUGUI sub = MakeText("Subtitle", card.transform, "TACTICAL EXPEDITION  ·  ELEMENTAL ALCHEMY  ·  SANCTUM ROGUELITE", 22f, Palette.IvoryCloth);
-            sub.rectTransform.offsetMax = new Vector2(-10f, -125f);
+            // Title Crest Container
+            RectTransform crest = MakeRect("TitleCrest", _titlePanel.transform,
+                new Vector2(0.5f, 0.68f), new Vector2(0.5f, 0.68f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(1020f, 300f));
 
-            GameObject promptBox = MakePanel("TitlePromptBox", _titlePanel.transform, new Vector2(0.5f, 0.25f), new Vector2(0.5f, 0.25f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(680f, 70f), Palette.UiPanelBg, true);
-            _titlePromptText = MakeText("Prompt", promptBox.transform, "PRESS ANY KEY OR CLICK TO ENTER THE SANCTUM", 24f, Palette.LightningCyan);
+            _titleGlowImg = MakeImage("TitleAura", crest, UIArtFactory.RadialGlow, new Color(Palette.FiligreeGold.r, Palette.FiligreeGold.g, Palette.FiligreeGold.b, 0.24f),
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, 15f), new Vector2(880f, 360f));
 
-            Button enterBtn = promptBox.AddComponent<Button>();
-            promptBox.GetComponent<Image>().raycastTarget = true;
+            // Floating Crown Emblem above title
+            MakeImage("CrownEmblem", crest, UIArtFactory.IconCrown, Palette.FiligreeGold,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -24f), new Vector2(54f, 54f));
+
+            // Main Title Banner Panel (translucent royal obsidian with filigree trim)
+            GameObject titleCard = MakeChamferPanel("TitleCard", crest,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -12f), new Vector2(960f, 200f), new Color(0.07f, 0.10f, 0.20f, 0.82f), true);
+
+            TextMeshProUGUI mainTitle = MakeText("MainTitle", titleCard.transform, "AETHERFALL", 84f, Palette.FiligreeGold, TextAlignmentOptions.Center, FontStyles.Bold, 16f);
+            mainTitle.rectTransform.offsetMin = new Vector2(16f, 68f);
+            mainTitle.rectTransform.offsetMax = new Vector2(-16f, -12f);
+
+            MakeDivider(titleCard.transform, new Vector2(0f, -14f), 620f, Palette.FiligreeGold);
+
+            TextMeshProUGUI sub = MakeText("Subtitle", titleCard.transform,
+                "EXPEDICIÓN TÁCTICA   ·   ALQUIMIA ELEMENTAL   ·   SANTUARIO ROGUELITE",
+                20f, Palette.IvoryCloth, TextAlignmentOptions.Center, FontStyles.Bold, 4f);
+            sub.rectTransform.offsetMin = new Vector2(20f, 16f);
+            sub.rectTransform.offsetMax = new Vector2(-20f, -128f);
+
+            // Interactive Enter Sanctum CTA Button
+            RectTransform ctaAnchor = MakeRect("CtaAnchor", _titlePanel.transform,
+                new Vector2(0.5f, 0.21f), new Vector2(0.5f, 0.21f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(540f, 120f));
+
+            _titleCtaGlow = MakeImage("CtaAura", ctaAnchor, UIArtFactory.RadialGlow,
+                new Color(Palette.LightningCyan.r, Palette.LightningCyan.g, Palette.LightningCyan.b, 0.30f),
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, 14f), new Vector2(520f, 120f));
+
+            UnityEngine.UI.Button enterBtn = MakeActionButton("EnterSanctumBtn", ctaAnchor, "ENTRAR AL SANTUARIO",
+                new Vector2(0f, 14f), new Vector2(420f, 68f),
+                new Color(0.14f, 0.20f, 0.36f, 0.96f), new Color(0.22f, 0.32f, 0.52f, 0.98f),
+                Palette.FiligreeGold, Palette.LightningCyan, out _);
             enterBtn.onClick.AddListener(() => GameLoop.Instance?.StartExpedition());
+
+            RectTransform hintRt = MakeRect("SubPromptRt", ctaAnchor,
+                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -6f), new Vector2(600f, 34f));
+            _titleSubPromptText = MakeText("SubPrompt", hintRt, "PULSA CUALQUIER TECLA O HAZ CLIC PARA COMENZAR",
+                15f, Palette.LightningCyan, TextAlignmentOptions.Center, FontStyles.Normal, 3f);
         }
+
+        // ==================== 2. HUD TÁCTICO ====================
 
         void BuildHud(Transform root)
         {
@@ -260,106 +347,293 @@ namespace Aetherfall.UI
             hudRt.offsetMin = Vector2.zero;
             hudRt.offsetMax = Vector2.zero;
 
-            // Top Banner
-            GameObject topBar = MakePanel("TopBanner", _hudPanel.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -18f), new Vector2(1040f, 108f), Palette.UiPanelBg, true);
-            _chamberHeaderText = MakeText("ChamberText", topBar.transform, "CHAMBER 1 / 3  ·  THE SHATTERED COURTYARD", 20f, Palette.FiligreeGold, TextAlignmentOptions.Top);
-            _chamberHeaderText.rectTransform.offsetMin = new Vector2(16f, 66f);
+            // --- TOP-LEFT: Compact Chamber Pill ---
+            GameObject chamberPill = MakeChamferPanel("ChamberPill", _hudPanel.transform,
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(24f, -20f), new Vector2(410f, 52f), PanelDeepNavy, false);
 
-            _turnBannerText = MakeText("TurnText", topBar.transform, "YOUR TURN — MOVE & SELECT ACTION", 27f, Palette.IvoryCloth, TextAlignmentOptions.Center);
-            _turnBannerText.rectTransform.offsetMin = new Vector2(16f, 28f);
-            _turnBannerText.rectTransform.offsetMax = new Vector2(-16f, -34f);
+            MakeImage("ChamberGem", chamberPill.transform, UIArtFactory.DiamondGem, Palette.FiligreeGold,
+                new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(24f, 0f), new Vector2(18f, 18f));
 
-            _objectiveHintText = MakeText("HintText", topBar.transform, "WASD / Click: Move  |  [1] Strike  [2] Oil/Water Flask  [3] Shot  [4] Shove  |  [ESC] Pause", 16f, Palette.LightningCyan, TextAlignmentOptions.Bottom);
-            _objectiveHintText.rectTransform.offsetMax = new Vector2(-16f, -68f);
+            _chamberHeaderText = MakeText("ChamberText", chamberPill.transform, "CÁMARA 1/3 · EL PATIO QUEBRADO",
+                16f, Palette.FiligreeGold, TextAlignmentOptions.Left, FontStyles.Bold, 2f);
+            _chamberHeaderText.rectTransform.offsetMin = new Vector2(44f, 4f);
+            _chamberHeaderText.rectTransform.offsetMax = new Vector2(-14f, -4f);
 
-            // Pause button top-right
-            Button pauseBtn = MakeButton("PauseBtn", _hudPanel.transform, "PAUSE [ESC]", Vector2.zero, new Vector2(170f, 46f), Palette.UiPanelBg, Palette.IvoryCloth, out _);
+            // --- TOP-CENTER: Sleek Turn Phase Ribbon ---
+            GameObject turnRibbon = MakeChamferPanel("TurnRibbon", _hudPanel.transform,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -18f), new Vector2(680f, 62f), PanelDeepNavy, true);
+
+            _turnBannerText = MakeText("TurnText", turnRibbon.transform, "TU TURNO — ELIGE UNA ACCIÓN",
+                22f, Palette.FiligreeGold, TextAlignmentOptions.Center, FontStyles.Bold, 3f);
+            _turnBannerText.rectTransform.offsetMin = new Vector2(18f, 10f);
+            _turnBannerText.rectTransform.offsetMax = new Vector2(-18f, -6f);
+
+            _turnAccentLine = MakeImage("TurnAccent", turnRibbon.transform, UIArtFactory.GoldDivider, Palette.FiligreeGold,
+                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, 4f), new Vector2(420f, 10f));
+
+            // --- TOP-RIGHT: Sleek Pause Pill ---
+            UnityEngine.UI.Button pauseBtn = MakeActionButton("PauseBtn", _hudPanel.transform, "PAUSA [ESC]",
+                Vector2.zero, new Vector2(216f, 50f), PanelDeepNavy, PanelCardHover, Palette.IvoryCloth, Palette.FiligreeGold, out UIJuiceButton pauseJuice);
             RectTransform pRt = pauseBtn.GetComponent<RectTransform>();
             pRt.anchorMin = new Vector2(1f, 1f);
             pRt.anchorMax = new Vector2(1f, 1f);
             pRt.pivot = new Vector2(1f, 1f);
-            pRt.anchoredPosition = new Vector2(-24f, -24f);
+            pRt.anchoredPosition = new Vector2(-24f, -20f);
+            pauseJuice.SetBasePosition(pRt.anchoredPosition);
             pauseBtn.onClick.AddListener(() => GameLoop.Instance?.TogglePause());
 
-            // Bottom Tactical Bar
-            GameObject bottomPanel = MakePanel("BottomBar", _hudPanel.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 18f), new Vector2(1380f, 152f), Palette.UiPanelBg, true);
+            TextMeshProUGUI pauseLabel = pauseBtn.GetComponentInChildren<TextMeshProUGUI>();
+            if (pauseLabel != null)
+            {
+                pauseLabel.fontSize = 16f;
+                pauseLabel.alignment = TextAlignmentOptions.MidlineLeft;
+                pauseLabel.rectTransform.offsetMin = new Vector2(46f, 4f);
+                pauseLabel.rectTransform.offsetMax = new Vector2(-12f, -4f);
+            }
 
-            // Left Stats Column (HP, XP, Level, Weapon)
-            GameObject statsBox = MakePanel("StatsBox", bottomPanel.transform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(18f, 0f), new Vector2(360f, 124f), Palette.UiPanelInner, true);
+            MakeImage("PauseIcon", pauseBtn.transform, UIArtFactory.IconPause, Palette.FiligreeGold,
+                new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(25f, 0f), new Vector2(18f, 18f));
 
-            _levelText = MakeText("LevelText", statsBox.transform, "LVL 1 EXPEDITIONER", 18f, Palette.FiligreeGold, TextAlignmentOptions.TopLeft);
-            _levelText.rectTransform.offsetMin = new Vector2(12f, 88f);
+            // --- BOTTOM-CENTER: Tactical Command Deck ---
+            GameObject deck = MakeChamferPanel("TacticalDeck", _hudPanel.transform,
+                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(0f, 36f), new Vector2(1380f, 152f), PanelDeepNavy, true);
 
-            // HP Bar
-            GameObject hpBg = MakePanel("HpBg", statsBox.transform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -38f), new Vector2(-24f, 26f), Palette.AbyssShadow, true);
-            GameObject hpFill = new GameObject("HpFill");
-            hpFill.transform.SetParent(hpBg.transform, false);
-            RectTransform hpFillRt = hpFill.AddComponent<RectTransform>();
-            hpFillRt.anchorMin = Vector2.zero;
-            hpFillRt.anchorMax = Vector2.one;
-            hpFillRt.offsetMin = new Vector2(2f, 2f);
-            hpFillRt.offsetMax = new Vector2(-2f, -2f);
-            _hpFillImg = hpFill.AddComponent<Image>();
-            _hpFillImg.sprite = _solidSprite;
-            _hpFillImg.type = Image.Type.Filled;
-            _hpFillImg.fillMethod = Image.FillMethod.Horizontal;
-            _hpFillImg.color = Palette.HeroCrimson;
-            _hpFillImg.raycastTarget = false;
-            _hpValueText = MakeText("HpVal", hpBg.transform, "120 / 120 HP", 15f, Palette.IvoryCloth);
+            // Subtle top gold filigree rule along the deck
+            MakeImage("DeckFiligree", deck.transform, UIArtFactory.GoldDivider, new Color(Palette.FiligreeGold.r, Palette.FiligreeGold.g, Palette.FiligreeGold.b, 0.75f),
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -2f), new Vector2(820f, 12f));
+
+            // === LEFT MODULE: Hero Portrait Crest & Vitals ===
+            GameObject vitals = MakeChamferPanel("HeroVitals", deck.transform,
+                new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+                new Vector2(18f, 0f), new Vector2(380f, 126f), PanelCardNavy, false);
+
+            // Level Diamond Crest
+            UnityEngine.UI.Image lvlCrest = MakeImage("LevelCrest", vitals.transform, UIArtFactory.DiamondGem, Palette.FiligreeGold,
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0.5f, 0.5f),
+                new Vector2(30f, -26f), new Vector2(38f, 38f));
+            _levelBadgeText = MakeText("LvlNum", lvlCrest.transform, "1", 17f, new Color(0.06f, 0.08f, 0.16f, 1f), TextAlignmentOptions.Center, FontStyles.Bold, 0f);
+            _levelBadgeText.outlineWidth = 0f;
+
+            TextMeshProUGUI heroTitle = MakeText("HeroTitle", vitals.transform, "EXPEDICIONARIO",
+                17f, Palette.FiligreeGold, TextAlignmentOptions.TopLeft, FontStyles.Bold, 3f);
+            heroTitle.rectTransform.offsetMin = new Vector2(56f, 88f);
+            heroTitle.rectTransform.offsetMax = new Vector2(-12f, -12f);
+
+            // HP Bar with Delayed Damage Trail
+            UnityEngine.UI.Image hpTrack = MakeImage("HpTrack", vitals.transform, UIArtFactory.RoundedPill, BarTrackDark,
+                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -48f), new Vector2(-28f, 26f), UnityEngine.UI.Image.Type.Sliced);
+
+            // Delayed white/amber catch-up trail
+            _hpTrailFillImg = MakeImage("HpTrail", hpTrack.transform, UIArtFactory.GradientBar, Palette.FiligreeGold,
+                Vector2.zero, Vector2.one, new Vector2(0f, 0.5f), Vector2.zero, new Vector2(-4f, -4f), UnityEngine.UI.Image.Type.Filled);
+            _hpTrailFillImg.fillMethod = UnityEngine.UI.Image.FillMethod.Horizontal;
+
+            // Main Crimson HP Fill
+            _hpFillImg = MakeImage("HpFill", hpTrack.transform, UIArtFactory.GradientBar, Palette.HeroCrimson,
+                Vector2.zero, Vector2.one, new Vector2(0f, 0.5f), Vector2.zero, new Vector2(-4f, -4f), UnityEngine.UI.Image.Type.Filled);
+            _hpFillImg.fillMethod = UnityEngine.UI.Image.FillMethod.Horizontal;
+
+            // Crisp pill outline over HP bar
+            MakeImage("HpBorder", hpTrack.transform, UIArtFactory.RoundedPillOutline, new Color(Palette.FiligreeGold.r, Palette.FiligreeGold.g, Palette.FiligreeGold.b, 0.55f),
+                Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero, UnityEngine.UI.Image.Type.Sliced);
+
+            _hpValueText = MakeText("HpVal", hpTrack.transform, "120 / 120 PV", 15f, Palette.IvoryCloth, TextAlignmentOptions.Center, FontStyles.Bold, 1.5f);
 
             // XP Bar
-            GameObject xpBg = MakePanel("XpBg", statsBox.transform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -72f), new Vector2(-24f, 16f), Palette.AbyssShadow, true);
-            GameObject xpFill = new GameObject("XpFill");
-            xpFill.transform.SetParent(xpBg.transform, false);
-            RectTransform xpFillRt = xpFill.AddComponent<RectTransform>();
-            xpFillRt.anchorMin = Vector2.zero;
-            xpFillRt.anchorMax = Vector2.one;
-            xpFillRt.offsetMin = new Vector2(2f, 2f);
-            xpFillRt.offsetMax = new Vector2(-2f, -2f);
-            _xpFillImg = xpFill.AddComponent<Image>();
-            _xpFillImg.sprite = _solidSprite;
-            _xpFillImg.type = Image.Type.Filled;
-            _xpFillImg.fillMethod = Image.FillMethod.Horizontal;
-            _xpFillImg.color = Palette.FiligreeGold;
-            _xpFillImg.raycastTarget = false;
+            UnityEngine.UI.Image xpTrack = MakeImage("XpTrack", vitals.transform, UIArtFactory.RoundedPill, BarTrackDark,
+                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -80f), new Vector2(-28f, 11f), UnityEngine.UI.Image.Type.Sliced);
 
-            _weaponText = MakeText("WeaponText", statsBox.transform, "Solar Greatsword (Fire)", 16f, Palette.FireAmber, TextAlignmentOptions.BottomLeft);
-            _weaponText.rectTransform.offsetMax = new Vector2(-12f, -94f);
+            _xpFillImg = MakeImage("XpFill", xpTrack.transform, UIArtFactory.GradientBar, Palette.FiligreeGold,
+                Vector2.zero, Vector2.one, new Vector2(0f, 0.5f), Vector2.zero, new Vector2(-2f, -2f), UnityEngine.UI.Image.Type.Filled);
+            _xpFillImg.fillMethod = UnityEngine.UI.Image.FillMethod.Horizontal;
 
-            // AP Crystals Display
-            GameObject apBox = MakePanel("ApBox", bottomPanel.transform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(394f, 0f), new Vector2(180f, 124f), Palette.UiPanelInner, true);
-            _apValueText = MakeText("ApHeader", apBox.transform, "AP: 3 / 6", 20f, Palette.LightningCyan, TextAlignmentOptions.Top);
-            _apValueText.rectTransform.offsetMin = new Vector2(6f, 80f);
+            // Weapon Chip
+            _weaponDotImg = MakeImage("WeaponDot", vitals.transform, UIArtFactory.DiamondGem, Palette.FireAmber,
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0.5f, 0.5f),
+                new Vector2(22f, 18f), new Vector2(14f, 14f));
+
+            _weaponText = MakeText("WeaponText", vitals.transform, "Espadón Solar · Fuego",
+                15f, Palette.FireAmber, TextAlignmentOptions.BottomLeft, FontStyles.Bold, 1f);
+            _weaponText.rectTransform.offsetMin = new Vector2(36f, 8f);
+            _weaponText.rectTransform.offsetMax = new Vector2(-12f, -92f);
+
+            // === CENTER-LEFT MODULE: Arcane AP Crystal Rack ===
+            GameObject apRack = MakeChamferPanel("ApRack", deck.transform,
+                new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+                new Vector2(410f, 0f), new Vector2(166f, 126f), PanelCardNavy, false);
+
+            _apValueText = MakeText("ApHeader", apRack.transform, "PA  3 / 6",
+                17f, Palette.LightningCyan, TextAlignmentOptions.Top, FontStyles.Bold, 2.5f);
+            _apValueText.rectTransform.offsetMin = new Vector2(8f, 92f);
+            _apValueText.rectTransform.offsetMax = new Vector2(-8f, -6f);
 
             for (int i = 0; i < 6; i++)
             {
-                float x = -56f + (i % 3) * 56f;
-                float y = (i < 3) ? -2f : -38f;
-                GameObject pip = MakePanel($"ApPip_{i}", apBox.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(x, y), new Vector2(26f, 26f), Palette.LightningCyan, true);
-                _apPips.Add(pip.GetComponent<Image>());
+                float x = -46f + (i % 3) * 46f;
+                float y = (i < 3) ? 6f : -34f;
+
+                UnityEngine.UI.Image glow = MakeImage($"ApGlow_{i}", apRack.transform, UIArtFactory.RadialGlow,
+                    new Color(Palette.LightningCyan.r, Palette.LightningCyan.g, Palette.LightningCyan.b, 0.45f),
+                    new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                    new Vector2(x, y), new Vector2(46f, 46f));
+
+                UnityEngine.UI.Image gem = MakeImage($"ApGem_{i}", apRack.transform, UIArtFactory.DiamondGem, Palette.LightningCyan,
+                    new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                    new Vector2(x, y), new Vector2(28f, 28f));
+
+                MakeImage($"ApRim_{i}", gem.transform, UIArtFactory.DiamondOutline, new Color(1f, 1f, 1f, 0.45f),
+                    Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+
+                _apGlows.Add(glow);
+                _apPips.Add(gem);
             }
 
-            // Tactical Skill Buttons Bar
-            _tacticalBar = new GameObject("TacticalButtons");
-            _tacticalBar.transform.SetParent(bottomPanel.transform, false);
+            // === RIGHT MODULE: Tactical Skill Cards ===
+            _tacticalBar = new GameObject("TacticalSkillsBar");
+            _tacticalBar.transform.SetParent(deck.transform, false);
             RectTransform tbRt = _tacticalBar.AddComponent<RectTransform>();
             tbRt.anchorMin = new Vector2(0f, 0.5f);
             tbRt.anchorMax = new Vector2(1f, 0.5f);
-            tbRt.offsetMin = new Vector2(590f, -58f);
-            tbRt.offsetMax = new Vector2(-18f, 58f);
+            tbRt.offsetMin = new Vector2(588f, -64f);
+            tbRt.offsetMax = new Vector2(-18f, 64f);
 
-            _btnStrike = MakeButton("BtnStrike", _tacticalBar.transform, "[1] STRIKE\n1 AP", new Vector2(-300f, 0f), new Vector2(148f, 108f), Palette.UiPanelInner, Palette.FiligreeGold, out _);
-            _btnFlask = MakeButton("BtnFlask", _tacticalBar.transform, "[2] OIL FLASK\n1 AP", new Vector2(-145f, 0f), new Vector2(148f, 108f), Palette.UiPanelInner, Palette.FireAmber, out _btnFlaskLabel);
-            _btnShot = MakeButton("BtnShot", _tacticalBar.transform, "[3] AIM SHOT\n1 AP", new Vector2(10f, 0f), new Vector2(148f, 108f), Palette.UiPanelInner, Palette.LightningCyan, out _);
-            _btnShove = MakeButton("BtnShove", _tacticalBar.transform, "[4] SHOVE\n1 AP", new Vector2(165f, 0f), new Vector2(148f, 108f), Palette.UiPanelInner, Palette.IvoryCloth, out _);
-            _btnEndTurn = MakeButton("BtnEndTurn", _tacticalBar.transform, "END TURN\n[TAB]", new Vector2(315f, 0f), new Vector2(138f, 108f), Palette.HeroCrimson, Palette.IvoryCloth, out _);
+            CreateSkillCard("BtnStrike", _tacticalBar.transform, "1", "GOLPE", "1 PA",
+                UIArtFactory.IconSword, Palette.FiligreeGold, new Vector2(-304f, 0f), new Vector2(146f, 118f),
+                PanelCardNavy, PanelCardHover, PanelCardSelected,
+                () => HeroController.Instance?.SelectAction(TacticalActionMode.Strike),
+                out _juiceStrike, out _, out _);
 
-            _btnStrike.onClick.AddListener(() => HeroController.Instance?.SelectAction(TacticalActionMode.Strike));
-            _btnFlask.onClick.AddListener(() => HeroController.Instance?.SelectAction(TacticalActionMode.Flask));
-            _btnShot.onClick.AddListener(() => HeroController.Instance?.SelectAction(TacticalActionMode.FreeAimShot));
-            _btnShove.onClick.AddListener(() => HeroController.Instance?.SelectAction(TacticalActionMode.Shove));
-            _btnEndTurn.onClick.AddListener(() => HeroController.Instance?.EndPlayerTurn());
+            CreateSkillCard("BtnFlask", _tacticalBar.transform, "2", "ACEITE", "1 PA",
+                UIArtFactory.IconFlask, Palette.FireAmber, new Vector2(-150f, 0f), new Vector2(146f, 118f),
+                PanelCardNavy, PanelCardHover, PanelCardSelected,
+                () => HeroController.Instance?.SelectAction(TacticalActionMode.Flask),
+                out _juiceFlask, out _btnFlaskLabel, out _btnFlaskIcon);
+
+            CreateSkillCard("BtnShot", _tacticalBar.transform, "3", "DISPARO", "1 PA",
+                UIArtFactory.IconCrosshair, Palette.LightningCyan, new Vector2(4f, 0f), new Vector2(146f, 118f),
+                PanelCardNavy, PanelCardHover, PanelCardSelected,
+                () => HeroController.Instance?.SelectAction(TacticalActionMode.FreeAimShot),
+                out _juiceShot, out _, out _);
+
+            CreateSkillCard("BtnShove", _tacticalBar.transform, "4", "EMPUJÓN", "1 PA",
+                UIArtFactory.IconShove, Palette.IvoryCloth, new Vector2(158f, 0f), new Vector2(146f, 118f),
+                PanelCardNavy, PanelCardHover, PanelCardSelected,
+                () => HeroController.Instance?.SelectAction(TacticalActionMode.Shove),
+                out _juiceShove, out _, out _);
+
+            // End Turn Distinct Crimson-Gold Card
+            CreateSkillCard("BtnEndTurn", _tacticalBar.transform, "TAB", "FIN TURNO", "PASAR",
+                UIArtFactory.IconHourglass, Palette.IvoryCloth, new Vector2(314f, 0f), new Vector2(142f, 118f),
+                new Color(0.52f, 0.12f, 0.18f, 0.96f), new Color(0.72f, 0.18f, 0.24f, 0.98f), new Color(0.72f, 0.18f, 0.24f, 0.98f),
+                () => HeroController.Instance?.EndPlayerTurn(),
+                out _, out _, out _);
+
+            // Exploration Mode Info Card (replaces skill cards during free exploration so the deck never looks empty)
+            _explorationCard = MakeChamferPanel("ExplorationCard", deck.transform,
+                new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, Vector2.zero, PanelCardNavy, false);
+            RectTransform expRt = _explorationCard.GetComponent<RectTransform>();
+            expRt.offsetMin = new Vector2(588f, -63f);
+            expRt.offsetMax = new Vector2(-18f, 63f);
+
+            MakeImage("ExpIcon", _explorationCard.transform, UIArtFactory.IconCrown, Palette.LightningCyan,
+                new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(46f, 0f), new Vector2(44f, 44f));
+
+            TextMeshProUGUI expTitle = MakeText("ExpTitle", _explorationCard.transform, "MODO EXPLORACIÓN — EXPLORA EL SANTUARIO",
+                18f, Palette.LightningCyan, TextAlignmentOptions.TopLeft, FontStyles.Bold, 2.5f);
+            expTitle.rectTransform.offsetMin = new Vector2(88f, 70f);
+            expTitle.rectTransform.offsetMax = new Vector2(-20f, -14f);
+
+            TextMeshProUGUI expDesc = MakeText("ExpDesc", _explorationCard.transform,
+                "Muévete libremente con WASD o clic izquierdo. Acércate a los cofres dorados para equipar nuevas armas elementales y dispara a los cristales rúnicos para abrir barreras.",
+                15f, MutedIvory, TextAlignmentOptions.BottomLeft, FontStyles.Normal, 0.5f);
+            expDesc.rectTransform.offsetMin = new Vector2(88f, 14f);
+            expDesc.rectTransform.offsetMax = new Vector2(-20f, -48f);
+            _explorationCard.SetActive(false);
+
+            // Compact translucent Controls Strip pill tucked right below the deck
+            UnityEngine.UI.Image stripPill = MakeImage("ControlsStrip", _hudPanel.transform, UIArtFactory.RoundedPill,
+                new Color(0.05f, 0.08f, 0.16f, 0.82f),
+                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(0f, 5f), new Vector2(1180f, 26f), UnityEngine.UI.Image.Type.Sliced);
+            _controlsStripText = MakeText("ControlsText", stripPill.transform,
+                "WASD / Clic: Mover   ·   [1-4] Habilidades   ·   [2] Doble clic: Alternar Aceite/Agua   ·   [TAB] Fin de Turno   ·   [ESC] Pausa",
+                13.5f, MutedIvory, TextAlignmentOptions.Center, FontStyles.Normal, 1.2f);
         }
+
+        void CreateSkillCard(string name, Transform parent, string keycap, string title, string costTag,
+            Sprite iconSprite, Color accentColor, Vector2 pos, Vector2 size,
+            Color bgNormal, Color bgHover, Color bgSelected, UnityEngine.Events.UnityAction onClick,
+            out UIJuiceButton juiceOut, out TextMeshProUGUI titleLabelOut, out UnityEngine.UI.Image iconImgOut)
+        {
+            GameObject card = MakeChamferPanel(name, parent,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                pos, size, bgNormal, true, true);
+
+            // Hover / Selected radial glow behind card
+            UnityEngine.UI.Image glow = MakeImage("Glow", card.transform, UIArtFactory.RadialGlow,
+                new Color(accentColor.r, accentColor.g, accentColor.b, 0f),
+                Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(36f, 36f));
+            glow.transform.SetAsFirstSibling();
+
+            // Top Selection Accent Bar (visible only when active)
+            UnityEngine.UI.Image selBar = MakeImage("SelectedAccent", card.transform, UIArtFactory.RoundedPill, Palette.FiligreeGold,
+                new Vector2(0.16f, 1f), new Vector2(0.84f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -2f), new Vector2(0f, 5f), UnityEngine.UI.Image.Type.Sliced);
+            selBar.enabled = false;
+
+            // Keycap Pill top-left
+            float keyW = keycap.Length > 1 ? 46f : 26f;
+            UnityEngine.UI.Image keyPill = MakeImage("Keycap", card.transform, UIArtFactory.RoundedPill, BarTrackDark,
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(9f, -9f), new Vector2(keyW, 22f), UnityEngine.UI.Image.Type.Sliced);
+            MakeText("KeyTxt", keyPill.transform, keycap, 12f, Palette.FiligreeGold, TextAlignmentOptions.Center, FontStyles.Bold, 0.5f);
+
+            // Center Vector Icon
+            iconImgOut = MakeImage("Icon", card.transform, iconSprite, accentColor,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, 16f), new Vector2(46f, 46f));
+
+            // Title Label
+            RectTransform titleRt = MakeRect("TitleRt", card.transform,
+                new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(0f, 25f), new Vector2(-10f, 26f));
+            titleLabelOut = MakeText("Title", titleRt, title, 15f, accentColor, TextAlignmentOptions.Center, FontStyles.Bold, 1.5f);
+
+            // Cost Pill bottom
+            RectTransform costRt = MakeRect("CostRt", card.transform,
+                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(0f, 6f), new Vector2(72f, 18f));
+            MakeText("Cost", costRt, costTag, 12f, MutedIvory, TextAlignmentOptions.Center, FontStyles.Normal, 1.5f);
+
+            UnityEngine.UI.Button btn = card.AddComponent<UnityEngine.UI.Button>();
+            btn.transition = Selectable.Transition.None;
+            btn.onClick.AddListener(onClick);
+
+            juiceOut = card.AddComponent<UIJuiceButton>();
+            juiceOut.BackgroundImage = card.GetComponent<UnityEngine.UI.Image>();
+            juiceOut.GlowImage = glow;
+            juiceOut.SelectionAccentBar = selBar;
+            juiceOut.NormalBg = bgNormal;
+            juiceOut.HoverBg = bgHover;
+            juiceOut.SelectedBg = bgSelected;
+            juiceOut.GlowColor = new Color(accentColor.r, accentColor.g, accentColor.b, 0.55f);
+            juiceOut.HoverLiftY = 6f;
+            juiceOut.SelectedLiftY = 12f;
+            juiceOut.SetBasePosition(pos);
+        }
+
+        // ==================== 3. OVERLAY QTE (EXPEDITION 33) ====================
 
         void BuildQteOverlay(Transform root)
         {
@@ -371,57 +645,122 @@ namespace Aetherfall.UI
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
 
-            GameObject targetRing = new GameObject("TargetRing");
-            targetRing.transform.SetParent(_qteOverlay.transform, false);
-            RectTransform tRt = targetRing.AddComponent<RectTransform>();
-            tRt.anchorMin = new Vector2(0.5f, 0.5f);
-            tRt.anchorMax = new Vector2(0.5f, 0.5f);
-            tRt.sizeDelta = new Vector2(220f, 220f);
-            _qteTargetRingImg = targetRing.AddComponent<Image>();
-            _qteTargetRingImg.sprite = _ringSprite;
-            _qteTargetRingImg.color = Palette.FiligreeGold;
-            _qteTargetRingImg.raycastTarget = false;
+            // Soft radial center aura
+            _qteCenterGlowImg = MakeImage("QteCenterGlow", _qteOverlay.transform, UIArtFactory.RadialGlow,
+                new Color(Palette.FiligreeGold.r, Palette.FiligreeGold.g, Palette.FiligreeGold.b, 0.25f),
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(340f, 340f));
 
-            GameObject dynRing = new GameObject("DynamicRing");
-            dynRing.transform.SetParent(_qteOverlay.transform, false);
-            _qteDynamicRing = dynRing.AddComponent<RectTransform>();
-            _qteDynamicRing.anchorMin = new Vector2(0.5f, 0.5f);
-            _qteDynamicRing.anchorMax = new Vector2(0.5f, 0.5f);
-            _qteDynamicRing.sizeDelta = new Vector2(220f, 220f);
-            _qteDynamicRingImg = dynRing.AddComponent<Image>();
-            _qteDynamicRingImg.sprite = _ringSprite;
-            _qteDynamicRingImg.color = Palette.LightningCyan;
-            _qteDynamicRingImg.raycastTarget = false;
+            // Target Golden Ring with 4 cardinal diamonds
+            _qteTargetRingImg = MakeImage("TargetRing", _qteOverlay.transform, UIArtFactory.QteTargetRing, Palette.FiligreeGold,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(236f, 236f));
 
-            GameObject banner = MakePanel("QteBanner", _qteOverlay.transform, new Vector2(0.5f, 0.34f), new Vector2(0.5f, 0.34f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760f, 64f), Palette.UiPanelBg, true);
-            _qtePromptText = MakeText("QtePrompt", banner.transform, "PRESS [SPACE / LMB] ON GOLDEN RING!", 24f, Palette.FiligreeGold);
+            // Shrinking Dynamic Ring
+            _qteDynamicRingImg = MakeImage("DynamicRing", _qteOverlay.transform, UIArtFactory.QteRing, Palette.LightningCyan,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(236f, 236f));
+            _qteDynamicRing = _qteDynamicRingImg.rectTransform;
+
+            // Sleek Prompt Pill
+            GameObject banner = MakeChamferPanel("QteBanner", _qteOverlay.transform,
+                new Vector2(0.5f, 0.30f), new Vector2(0.5f, 0.30f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(820f, 64f), PanelDeepNavy, true);
+            _qtePromptText = MakeText("QtePrompt", banner.transform, "¡RESONANCIA! PULSA [ESPACIO / CLIC IZQ.] EN EL ANILLO DORADO",
+                21f, Palette.FiligreeGold, TextAlignmentOptions.Center, FontStyles.Bold, 2f);
 
             _qteOverlay.SetActive(false);
         }
 
+        // ==================== 4. MODAL DE BENDICIONES (BOON DRAFT) ====================
+
         void BuildDraftModal(Transform root)
         {
-            _draftPanel = MakePanel("DraftModal", root, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero, Palette.UiScrim, false);
-            _draftPanel.GetComponent<Image>().raycastTarget = true;
+            _draftPanel = MakeImage("DraftModal", root, UIArtFactory.Solid, ScrimDark,
+                Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero,
+                UnityEngine.UI.Image.Type.Simple, true).gameObject;
 
-            GameObject header = MakePanel("DraftHeader", _draftPanel.transform, new Vector2(0.5f, 0.80f), new Vector2(0.5f, 0.80f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(880f, 90f), Palette.UiPanelBg, true);
-            MakeText("HeaderLabel", header.transform, "CHAMBER CLEARED — CHOOSE A ROGUELITE BOON", 32f, Palette.FiligreeGold);
+            // Header Crest
+            GameObject header = MakeChamferPanel("DraftHeader", _draftPanel.transform,
+                new Vector2(0.5f, 0.83f), new Vector2(0.5f, 0.83f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(860f, 96f), PanelDeepNavy, true);
+
+            TextMeshProUGUI hTitle = MakeText("HeaderLabel", header.transform, "CÁMARA DESPEJADA — ELIGE UNA BENDICIÓN",
+                28f, Palette.FiligreeGold, TextAlignmentOptions.Center, FontStyles.Bold, 4f);
+            hTitle.rectTransform.offsetMin = new Vector2(16f, 26f);
+            MakeDivider(header.transform, new Vector2(0f, -24f), 520f, Palette.FiligreeGold);
+
+            Sprite[] cardIcons = { UIArtFactory.IconLightning, UIArtFactory.IconFlask, UIArtFactory.IconChrono };
+            Color[] cardColors = { Palette.LightningCyan, Palette.FireAmber, Palette.FiligreeGold };
+            string[] cardTags = { "CONTRAATAQUE", "ALQUIMIA", "CRONOMANCIA" };
 
             for (int i = 0; i < 3; i++)
             {
-                float x = (i - 1) * 340f;
-                GameObject card = MakePanel($"BoonCard_{i}", _draftPanel.transform, new Vector2(0.5f, 0.45f), new Vector2(0.5f, 0.45f), new Vector2(0.5f, 0.5f), new Vector2(x, 0f), new Vector2(300f, 360f), Palette.UiPanelBg, true);
-                card.GetComponent<Image>().raycastTarget = true;
-                Button btn = card.AddComponent<Button>();
+                float x = (i - 1) * 365f;
+                Vector2 cardPos = new Vector2(x, -26f);
+                Color accent = cardColors[i];
 
-                TextMeshProUGUI titleTxt = MakeText("BoonTitle", card.transform, "BOON", 24f, Palette.FiligreeGold, TextAlignmentOptions.Top);
-                titleTxt.rectTransform.offsetMin = new Vector2(18f, 240f);
+                GameObject card = MakeChamferPanel($"BoonCard_{i}", _draftPanel.transform,
+                    new Vector2(0.5f, 0.45f), new Vector2(0.5f, 0.45f), new Vector2(0.5f, 0.5f),
+                    cardPos, new Vector2(328f, 430f), PanelCardNavy, true, true);
 
-                TextMeshProUGUI descTxt = MakeText("BoonDesc", card.transform, "Effect description.", 20f, Palette.IvoryCloth, TextAlignmentOptions.Center, FontStyles.Normal);
-                descTxt.rectTransform.offsetMin = new Vector2(18f, 70f);
-                descTxt.rectTransform.offsetMax = new Vector2(-18f, -100f);
+                // Hover glow behind card
+                UnityEngine.UI.Image glow = MakeImage("CardGlow", card.transform, UIArtFactory.RadialGlow,
+                    new Color(accent.r, accent.g, accent.b, 0f),
+                    Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(60f, 60f));
+                glow.transform.SetAsFirstSibling();
 
-                MakeText("SelectTag", card.transform, "[ CLICK TO ATTUNE ]", 16f, Palette.LightningCyan, TextAlignmentOptions.Bottom);
+                // Category Pill at top
+                UnityEngine.UI.Image tagPill = MakeImage("CategoryPill", card.transform, UIArtFactory.RoundedPill, BarTrackDark,
+                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                    new Vector2(0f, -20f), new Vector2(180f, 26f), UnityEngine.UI.Image.Type.Sliced);
+                TextMeshProUGUI tagTxt = MakeText("TagTxt", tagPill.transform, cardTags[i], 12f, accent, TextAlignmentOptions.Center, FontStyles.Bold, 3f);
+
+                // Emblem Medallion + Glow
+                UnityEngine.UI.Image iconGlow = MakeImage("IconGlow", card.transform, UIArtFactory.RadialGlow,
+                    new Color(accent.r, accent.g, accent.b, 0.38f),
+                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                    new Vector2(0f, -104f), new Vector2(130f, 130f));
+
+                UnityEngine.UI.Image iconImg = MakeImage("BoonIcon", card.transform, cardIcons[i], accent,
+                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                    new Vector2(0f, -104f), new Vector2(70f, 70f));
+
+                // Title
+                RectTransform titleRt = MakeRect("TitleRt", card.transform,
+                    new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
+                    new Vector2(0f, -158f), new Vector2(-24f, 44f));
+                TextMeshProUGUI titleTxt = MakeText("BoonTitle", titleRt, "BENDICIÓN", 22f, Palette.FiligreeGold, TextAlignmentOptions.Center, FontStyles.Bold, 2f);
+
+                MakeDivider(card.transform, new Vector2(0f, 5f), 220f, new Color(accent.r, accent.g, accent.b, 0.85f));
+
+                // Description
+                RectTransform descRt = MakeRect("DescRt", card.transform,
+                    new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f),
+                    new Vector2(0f, 76f), new Vector2(-32f, 128f));
+                TextMeshProUGUI descTxt = MakeText("BoonDesc", descRt, "Descripción del efecto.", 18f, Palette.IvoryCloth, TextAlignmentOptions.Center, FontStyles.Normal, 0.5f);
+
+                // Bottom CTA Pill
+                UnityEngine.UI.Image ctaPill = MakeImage("SelectPill", card.transform, UIArtFactory.RoundedPill, BarTrackDark,
+                    new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                    new Vector2(0f, 22f), new Vector2(226f, 38f), UnityEngine.UI.Image.Type.Sliced);
+                MakeImage("SelectPillRim", ctaPill.transform, UIArtFactory.RoundedPillOutline, accent,
+                    Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero, UnityEngine.UI.Image.Type.Sliced);
+                MakeText("SelectTag", ctaPill.transform, "SINTONIZAR", 15f, accent, TextAlignmentOptions.Center, FontStyles.Bold, 3f);
+
+                UnityEngine.UI.Button btn = card.AddComponent<UnityEngine.UI.Button>();
+                btn.transition = Selectable.Transition.None;
+
+                UIJuiceButton juice = card.AddComponent<UIJuiceButton>();
+                juice.BackgroundImage = card.GetComponent<UnityEngine.UI.Image>();
+                juice.GlowImage = glow;
+                juice.NormalBg = PanelCardNavy;
+                juice.HoverBg = PanelCardHover;
+                juice.SelectedBg = PanelCardHover;
+                juice.GlowColor = new Color(accent.r, accent.g, accent.b, 0.52f);
+                juice.HoverScale = 1.045f;
+                juice.HoverLiftY = 14f;
+                juice.SetBasePosition(cardPos);
 
                 int idx = i;
                 btn.onClick.AddListener(() =>
@@ -431,99 +770,162 @@ namespace Aetherfall.UI
                         DungeonDirector.Instance.PickBoon(choices[idx].Id);
                 });
 
-                _draftButtons.Add(btn);
+                _draftTags.Add(tagTxt);
                 _draftTitles.Add(titleTxt);
                 _draftDescs.Add(descTxt);
+                _draftIcons.Add(iconImg);
+                _draftIconGlows.Add(iconGlow);
             }
             _draftPanel.SetActive(false);
         }
 
+        // ==================== 5. MODAL DE PAUSA ====================
+
         void BuildPauseModal(Transform root)
         {
-            _pausePanel = MakePanel("PausePanel", root, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero, Palette.UiScrim, false);
-            _pausePanel.GetComponent<Image>().raycastTarget = true;
+            _pausePanel = MakeImage("PausePanel", root, UIArtFactory.Solid, ScrimDark,
+                Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero,
+                UnityEngine.UI.Image.Type.Simple, true).gameObject;
 
-            GameObject box = MakePanel("PauseBox", _pausePanel.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(540f, 460f), Palette.UiPanelBg, true);
-            TextMeshProUGUI hdr = MakeText("PauseHdr", box.transform, "EXPEDITION PAUSED", 34f, Palette.FiligreeGold, TextAlignmentOptions.Top);
-            hdr.rectTransform.offsetMin = new Vector2(10f, 380f);
+            GameObject box = MakeChamferPanel("PauseBox", _pausePanel.transform,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(560f, 480f), PanelDeepNavy, true);
 
-            TextMeshProUGUI mLabel = MakeText("MusicLabel", box.transform, "MUSIC VOLUME", 18f, Palette.IvoryCloth, TextAlignmentOptions.Left);
-            mLabel.rectTransform.anchoredPosition = new Vector2(0f, 80f);
-            mLabel.rectTransform.sizeDelta = new Vector2(-60f, -380f);
+            RectTransform hdrRt = MakeRect("PauseHdrRt", box.transform,
+                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -24f), new Vector2(-32f, 46f));
+            MakeText("PauseHdr", hdrRt, "EXPEDICIÓN EN PAUSA", 30f, Palette.FiligreeGold, TextAlignmentOptions.Center, FontStyles.Bold, 4f);
 
-            _musicSlider = MakeSlider("MusicSlider", box.transform, new Vector2(0f, 45f), 0.55f);
-            _musicSlider.onValueChanged.AddListener(v => SynthAudioManager.Instance?.SetMusicVolume(v));
+            MakeDivider(box.transform, new Vector2(0f, 158f), 380f, Palette.FiligreeGold);
 
-            TextMeshProUGUI sLabel = MakeText("SfxLabel", box.transform, "SFX VOLUME", 18f, Palette.IvoryCloth, TextAlignmentOptions.Left);
-            sLabel.rectTransform.anchoredPosition = new Vector2(0f, -15f);
-            sLabel.rectTransform.sizeDelta = new Vector2(-60f, -380f);
+            // Music Slider Row
+            RectTransform mRow = MakeRect("MusicLabelRow", box.transform,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, 102f), new Vector2(420f, 28f));
+            MakeText("MusicLabel", mRow, "VOLUMEN DE MÚSICA", 16f, Palette.IvoryCloth, TextAlignmentOptions.Left, FontStyles.Bold, 2f);
+            _musicValText = MakeText("MusicPct", mRow, "55%", 16f, Palette.FiligreeGold, TextAlignmentOptions.Right, FontStyles.Bold, 1f);
 
-            _sfxSlider = MakeSlider("SfxSlider", box.transform, new Vector2(0f, -50f), 0.85f);
-            _sfxSlider.onValueChanged.AddListener(v => SynthAudioManager.Instance?.SetSFXVolume(v));
+            _musicSlider = MakeSlider("MusicSlider", box.transform, new Vector2(0f, 66f), 0.55f);
+            _musicSlider.onValueChanged.AddListener(v =>
+            {
+                SynthAudioManager.Instance?.SetMusicVolume(v);
+                if (_musicValText != null) _musicValText.text = $"{Mathf.RoundToInt(v * 100f)}%";
+            });
 
-            Button resumeBtn = MakeButton("ResumeBtn", box.transform, "RESUME EXPEDITION", new Vector2(0f, -125f), new Vector2(320f, 54f), Palette.UiPanelInner, Palette.LightningCyan, out _);
+            // SFX Slider Row
+            RectTransform sRow = MakeRect("SfxLabelRow", box.transform,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, 10f), new Vector2(420f, 28f));
+            MakeText("SfxLabel", sRow, "VOLUMEN DE EFECTOS", 16f, Palette.IvoryCloth, TextAlignmentOptions.Left, FontStyles.Bold, 2f);
+            _sfxValText = MakeText("SfxPct", sRow, "85%", 16f, Palette.LightningCyan, TextAlignmentOptions.Right, FontStyles.Bold, 1f);
+
+            _sfxSlider = MakeSlider("SfxSlider", box.transform, new Vector2(0f, -26f), 0.85f);
+            _sfxSlider.onValueChanged.AddListener(v =>
+            {
+                SynthAudioManager.Instance?.SetSFXVolume(v);
+                if (_sfxValText != null) _sfxValText.text = $"{Mathf.RoundToInt(v * 100f)}%";
+            });
+
+            UnityEngine.UI.Button resumeBtn = MakeActionButton("ResumeBtn", box.transform, "REANUDAR EXPEDICIÓN",
+                new Vector2(0f, -110f), new Vector2(360f, 56f), PanelCardNavy, PanelCardHover, Palette.LightningCyan, Palette.LightningCyan, out _);
             resumeBtn.onClick.AddListener(() => GameLoop.Instance?.TogglePause());
 
-            Button restartBtn = MakeButton("RestartBtn", box.transform, "RESTART EXPEDITION", new Vector2(0f, -190f), new Vector2(320f, 54f), Palette.HeroCrimson, Palette.IvoryCloth, out _);
+            UnityEngine.UI.Button restartBtn = MakeActionButton("RestartBtn", box.transform, "REINICIAR EXPEDICIÓN",
+                new Vector2(0f, -180f), new Vector2(360f, 56f),
+                new Color(0.50f, 0.12f, 0.18f, 0.96f), new Color(0.70f, 0.18f, 0.24f, 0.98f),
+                Palette.IvoryCloth, Palette.HeroCrimson, out _);
             restartBtn.onClick.AddListener(() => GameLoop.Instance?.RestartExpedition());
 
             _pausePanel.SetActive(false);
         }
 
-        Slider MakeSlider(string name, Transform parent, Vector2 anchoredPos, float initial)
+        UnityEngine.UI.Slider MakeSlider(string name, Transform parent, Vector2 anchoredPos, float initial)
         {
-            GameObject go = MakePanel(name, parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), anchoredPos, new Vector2(380f, 26f), Palette.AbyssShadow, true);
-            Slider slider = go.AddComponent<Slider>();
+            UnityEngine.UI.Image track = MakeImage(name, parent, UIArtFactory.RoundedPill, BarTrackDark,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                anchoredPos, new Vector2(420f, 22f), UnityEngine.UI.Image.Type.Sliced, true);
+
+            MakeImage("TrackBorder", track.transform, UIArtFactory.RoundedPillOutline,
+                new Color(Palette.FiligreeGold.r, Palette.FiligreeGold.g, Palette.FiligreeGold.b, 0.45f),
+                Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero, UnityEngine.UI.Image.Type.Sliced);
+
+            UnityEngine.UI.Slider slider = track.gameObject.AddComponent<UnityEngine.UI.Slider>();
             slider.minValue = 0f;
             slider.maxValue = 1f;
             slider.value = initial;
 
-            GameObject fillArea = new GameObject("FillArea");
-            fillArea.transform.SetParent(go.transform, false);
-            RectTransform faRt = fillArea.AddComponent<RectTransform>();
-            faRt.anchorMin = Vector2.zero;
-            faRt.anchorMax = Vector2.one;
-            faRt.offsetMin = new Vector2(4f, 4f);
-            faRt.offsetMax = new Vector2(-4f, -4f);
+            RectTransform fillArea = MakeRect("FillArea", track.transform, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(-8f, -8f));
+            UnityEngine.UI.Image fill = MakeImage("Fill", fillArea, UIArtFactory.GradientBar, Palette.FiligreeGold,
+                Vector2.zero, Vector2.one, new Vector2(0f, 0.5f), Vector2.zero, Vector2.zero);
 
-            GameObject fill = new GameObject("Fill");
-            fill.transform.SetParent(fillArea.transform, false);
-            RectTransform fRt = fill.AddComponent<RectTransform>();
-            fRt.anchorMin = Vector2.zero;
-            fRt.anchorMax = Vector2.one;
-            fRt.offsetMin = Vector2.zero;
-            fRt.offsetMax = Vector2.zero;
-            Image fImg = fill.AddComponent<Image>();
-            fImg.sprite = _solidSprite;
-            fImg.color = Palette.FiligreeGold;
+            RectTransform handleArea = MakeRect("HandleArea", track.transform, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(-16f, 0f));
+            UnityEngine.UI.Image handle = MakeImage("Handle", handleArea, UIArtFactory.DiamondGem, Palette.LightningCyan,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(30f, 30f), UnityEngine.UI.Image.Type.Simple, true);
 
-            GameObject handle = MakePanel("Handle", go.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(22f, 34f), Palette.LightningCyan, true);
-            handle.GetComponent<Image>().raycastTarget = true;
-
-            slider.fillRect = fRt;
-            slider.handleRect = handle.GetComponent<RectTransform>();
-            slider.targetGraphic = handle.GetComponent<Image>();
+            slider.fillRect = fill.rectTransform;
+            slider.handleRect = handle.rectTransform;
+            slider.targetGraphic = handle;
             return slider;
         }
 
+        // ==================== 6. PANTALLA DE VICTORIA / DERROTA ====================
+
         void BuildEndScreen(Transform root)
         {
-            _endPanel = MakePanel("EndPanel", root, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero, Palette.UiScrim, false);
-            _endPanel.GetComponent<Image>().raycastTarget = true;
+            _endPanel = MakeImage("EndPanel", root, UIArtFactory.Solid, ScrimDark,
+                Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero,
+                UnityEngine.UI.Image.Type.Simple, true).gameObject;
 
-            GameObject box = MakePanel("EndBox", _endPanel.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(640f, 440f), Palette.UiPanelBg, true);
-            _endTitleText = MakeText("EndTitle", box.transform, "EXPEDITION VICTORIOUS!", 40f, Palette.FiligreeGold, TextAlignmentOptions.Top);
-            _endTitleText.rectTransform.offsetMin = new Vector2(18f, 340f);
+            GameObject box = MakeChamferPanel("EndBox", _endPanel.transform,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(680f, 500f), PanelDeepNavy, true);
 
-            _endStatsText = MakeText("EndStats", box.transform, "Stats...", 22f, Palette.IvoryCloth, TextAlignmentOptions.Center, FontStyles.Normal);
-            _endStatsText.rectTransform.offsetMin = new Vector2(24f, 110f);
-            _endStatsText.rectTransform.offsetMax = new Vector2(-24f, -110f);
+            _endIconImg = MakeImage("EndEmblem", box.transform, UIArtFactory.IconCrown, Palette.FiligreeGold,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -46f), new Vector2(56f, 56f));
 
-            Button playAgain = MakeButton("PlayAgainBtn", box.transform, "NEW EXPEDITION", new Vector2(0f, -155f), new Vector2(300f, 58f), Palette.FiligreeGold, Palette.AbyssShadow, out _);
+            RectTransform titleRt = MakeRect("EndTitleRt", box.transform,
+                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -76f), new Vector2(-36f, 52f));
+            _endTitleText = MakeText("EndTitle", titleRt, "¡SANTUARIO CONQUISTADO!", 36f, Palette.FiligreeGold, TextAlignmentOptions.Center, FontStyles.Bold, 4f);
+
+            RectTransform subRt = MakeRect("EndSubRt", box.transform,
+                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -124f), new Vector2(-48f, 28f));
+            _endSubtitleText = MakeText("EndSub", subRt, "RESUMEN DE LA EXPEDICIÓN", 15f, MutedIvory, TextAlignmentOptions.Center, FontStyles.Bold, 3f);
+
+            MakeDivider(box.transform, new Vector2(0f, 92f), 460f, Palette.FiligreeGold);
+
+            // Structured 2-column stats panel
+            GameObject statsCard = MakeChamferPanel("EndStatsCard", box.transform,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -18f), new Vector2(540f, 200f), PanelCardNavy, false);
+
+            RectTransform leftCol = MakeRect("StatsLeft", statsCard.transform,
+                new Vector2(0f, 0f), new Vector2(0.68f, 1f), new Vector2(0f, 0.5f),
+                Vector2.zero, Vector2.zero);
+            _endStatsLeftText = MakeText("LeftTxt", leftCol, "", 19f, MutedIvory, TextAlignmentOptions.Left, FontStyles.Normal, 1f);
+            _endStatsLeftText.rectTransform.offsetMin = new Vector2(26f, 16f);
+            _endStatsLeftText.lineSpacing = 12f;
+
+            RectTransform rightCol = MakeRect("StatsRight", statsCard.transform,
+                new Vector2(0.68f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f),
+                Vector2.zero, Vector2.zero);
+            _endStatsRightText = MakeText("RightTxt", rightCol, "", 19f, Palette.FiligreeGold, TextAlignmentOptions.Right, FontStyles.Bold, 1f);
+            _endStatsRightText.rectTransform.offsetMax = new Vector2(-26f, -16f);
+            _endStatsRightText.lineSpacing = 12f;
+
+            UnityEngine.UI.Button playAgain = MakeActionButton("PlayAgainBtn", box.transform, "NUEVA EXPEDICIÓN",
+                new Vector2(0f, -176f), new Vector2(340f, 60f),
+                new Color(0.75f, 0.56f, 0.14f, 0.98f), new Color(0.95f, 0.74f, 0.22f, 1f),
+                new Color(0.06f, 0.08f, 0.16f, 1f), Palette.FiligreeGold, out _);
             playAgain.onClick.AddListener(() => GameLoop.Instance?.RestartExpedition());
 
             _endPanel.SetActive(false);
         }
+
+        // ==================== STATE & DATA BINDING ====================
 
         void HandleStateChanged(GameState state)
         {
@@ -548,18 +950,42 @@ namespace Aetherfall.UI
             if (state == GameState.Won || state == GameState.Lost)
             {
                 bool won = state == GameState.Won;
-                _endTitleText.text = won ? "SANCTUM CONQUERED!" : "EXPEDITION FALLEN";
+                _endTitleText.text = won ? "¡SANTUARIO CONQUISTADO!" : "EXPEDICIÓN CAÍDA";
                 _endTitleText.color = won ? Palette.FiligreeGold : Palette.HeroCrimson;
+                _endIconImg.color = won ? Palette.FiligreeGold : Palette.HeroCrimson;
+                _endSubtitleText.text = won ? "HAS DOMINADO LA ALQUIMIA DEL SANTUARIO" : "EL ECLIPSE HA RECLAMADO A TU EXPEDICIONARIO";
+
                 GameLoop loop = GameLoop.Instance;
-                _endStatsText.text = $"Chamber Reached: {loop.CurrentChamber} / {loop.MaxChambers}\n" +
-                                     $"Hero Level: {loop.Level}\n" +
-                                     $"Perfect Parries: {loop.ParriesLanded}\n" +
-                                     $"Perfect Resonances: {loop.PerfectResonances}\n" +
-                                     $"Elemental Combos: {loop.ElementalCombos}\n" +
-                                     $"Enemies Defeated: {loop.EnemiesDefeated}";
+                _endStatsLeftText.text =
+                    "Cámara alcanzada\n" +
+                    "Nivel del héroe\n" +
+                    "Parries perfectos\n" +
+                    "Resonancias perfectas\n" +
+                    "Combos elementales\n" +
+                    "Enemigos derrotados";
+
+                _endStatsRightText.text =
+                    $"{loop.CurrentChamber} / {loop.MaxChambers}\n" +
+                    $"NV {loop.Level}\n" +
+                    $"{loop.ParriesLanded}\n" +
+                    $"{loop.PerfectResonances}\n" +
+                    $"{loop.ElementalCombos}\n" +
+                    $"{loop.EnemiesDefeated}";
             }
 
             RefreshStats();
+        }
+
+        static string GetActionSpanishName(TacticalActionMode mode, bool flaskOil)
+        {
+            switch (mode)
+            {
+                case TacticalActionMode.Strike: return "GOLPE";
+                case TacticalActionMode.Flask: return flaskOil ? "FRASCO DE ACEITE" : "FRASCO DE AGUA";
+                case TacticalActionMode.FreeAimShot: return "DISPARO PRECISO";
+                case TacticalActionMode.Shove: return "EMPUJÓN";
+                default: return "MOVER O ELEGIR ACCIÓN";
+            }
         }
 
         void RefreshStats()
@@ -568,32 +994,36 @@ namespace Aetherfall.UI
             GameLoop loop = GameLoop.Instance;
             HeroController hero = HeroController.Instance;
 
-            string chName = loop.CurrentChamber == 1 ? "THE SHATTERED COURTYARD" :
-                (loop.CurrentChamber == 2 ? "ALCHEMIST'S FLOODED HALL" : "THRONE OF THE ECLIPSE");
+            string chName = loop.CurrentChamber == 1 ? "EL PATIO QUEBRADO" :
+                (loop.CurrentChamber == 2 ? "SALA INUNDADA DEL ALQUIMISTA" : "TRONO DEL ECLIPSE");
             if (_chamberHeaderText != null)
-                _chamberHeaderText.text = $"CHAMBER {loop.CurrentChamber} / {loop.MaxChambers}  ·  {chName}";
+                _chamberHeaderText.text = $"CÁMARA {loop.CurrentChamber}/{loop.MaxChambers} · {chName}";
 
             if (_turnBannerText != null)
             {
+                Color accent = Palette.FiligreeGold;
                 switch (loop.State)
                 {
                     case GameState.Exploring:
-                        _turnBannerText.text = "EXPLORATION — OPEN CHESTS & ADVANCE";
-                        _turnBannerText.color = Palette.LightningCyan;
+                        _turnBannerText.text = "EXPLORACIÓN — ABRE COFRES Y AVANZA";
+                        accent = Palette.LightningCyan;
                         break;
                     case GameState.TacticalPlayerTurn:
-                        _turnBannerText.text = $"YOUR TURN — {hero.ActiveAction}  (MOVE LEFT: {hero.RemainingMoveDist:F1}m)";
-                        _turnBannerText.color = Palette.FiligreeGold;
+                        string act = GetActionSpanishName(hero.ActiveAction, hero.FlaskThrowsOil);
+                        _turnBannerText.text = $"TU TURNO — {act}  ({hero.RemainingMoveDist:F1}m)";
+                        accent = Palette.FiligreeGold;
                         break;
                     case GameState.ActionExecutionQTE:
-                        _turnBannerText.text = "ACTIVE RESONANCE EXECUTION!";
-                        _turnBannerText.color = Palette.FireAmber;
+                        _turnBannerText.text = "¡EJECUCIÓN DE RESONANCIA ACTIVA!";
+                        accent = Palette.FireAmber;
                         break;
                     case GameState.EnemyTurnDefense:
-                        _turnBannerText.text = "ENEMY TURN — DEFEND IN REAL TIME!";
-                        _turnBannerText.color = Palette.HeroCrimson;
+                        _turnBannerText.text = "¡TURNO ENEMIGO — DEFIÉNDETE EN TIEMPO REAL!";
+                        accent = Palette.HeroCrimson;
                         break;
                 }
+                _turnBannerText.color = accent;
+                if (_turnAccentLine != null) _turnAccentLine.color = accent;
             }
 
             if (_tacticalBar != null)
@@ -602,62 +1032,107 @@ namespace Aetherfall.UI
                                loop.State == GameState.ActionExecutionQTE ||
                                loop.State == GameState.EnemyTurnDefense;
                 _tacticalBar.SetActive(showBar);
+                if (_explorationCard != null)
+                    _explorationCard.SetActive(!showBar);
             }
 
             if (_hpValueText != null)
-                _hpValueText.text = $"{hero.CurrentHP} / {hero.MaxHP} HP";
-            if (_levelText != null)
-                _levelText.text = $"LVL {loop.Level} EXPEDITIONER";
+                _hpValueText.text = $"{hero.CurrentHP} / {hero.MaxHP} PV";
+            if (_levelBadgeText != null)
+                _levelBadgeText.text = loop.Level.ToString();
+
+            Color elemColor = hero.CurrentElement == ElementType.Fire ? Palette.FireAmber :
+                (hero.CurrentElement == ElementType.Lightning ? Palette.LightningCyan : Palette.FrostIce);
             if (_weaponText != null)
+            {
                 _weaponText.text = hero.GetWeaponDisplayName();
+                _weaponText.color = elemColor;
+            }
+            if (_weaponDotImg != null)
+                _weaponDotImg.color = elemColor;
+
             if (_apValueText != null)
-                _apValueText.text = $"AP: {hero.CurrentAP} / {hero.MaxAP}";
+                _apValueText.text = $"PA  {hero.CurrentAP} / {hero.MaxAP}";
 
             for (int i = 0; i < _apPips.Count; i++)
             {
-                _apPips[i].color = i < hero.CurrentAP ? Palette.LightningCyan : Palette.AbyssShadow;
+                bool active = i < hero.CurrentAP;
+                _apPips[i].color = active ? Palette.LightningCyan : BarTrackDark;
+                if (i < _apGlows.Count)
+                    _apGlows[i].enabled = active;
             }
 
             if (_btnFlaskLabel != null)
             {
-                string flaskName = hero.FlaskThrowsOil ? "OIL FLASK" : "WATER FLASK";
-                _btnFlaskLabel.text = $"[2] {flaskName}\n1 AP";
-                _btnFlaskLabel.color = hero.FlaskThrowsOil ? Palette.FireAmber : Palette.WaterAzure;
+                Color flaskCol = hero.FlaskThrowsOil ? Palette.FireAmber : Palette.WaterAzure;
+                _btnFlaskLabel.text = hero.FlaskThrowsOil ? "ACEITE" : "AGUA";
+                _btnFlaskLabel.color = flaskCol;
+                if (_btnFlaskIcon != null) _btnFlaskIcon.color = flaskCol;
             }
 
-            HighlightButton(_btnStrike, hero.ActiveAction == TacticalActionMode.Strike);
-            HighlightButton(_btnFlask, hero.ActiveAction == TacticalActionMode.Flask);
-            HighlightButton(_btnShot, hero.ActiveAction == TacticalActionMode.FreeAimShot);
-            HighlightButton(_btnShove, hero.ActiveAction == TacticalActionMode.Shove);
-        }
-
-        static void HighlightButton(Button btn, bool selected)
-        {
-            if (btn == null) return;
-            Image img = btn.GetComponent<Image>();
-            if (img != null)
-                img.color = selected ? Palette.MarbleTrim : Palette.UiPanelInner;
+            _juiceStrike?.SetSelected(hero.ActiveAction == TacticalActionMode.Strike);
+            _juiceFlask?.SetSelected(hero.ActiveAction == TacticalActionMode.Flask);
+            _juiceShot?.SetSelected(hero.ActiveAction == TacticalActionMode.FreeAimShot);
+            _juiceShove?.SetSelected(hero.ActiveAction == TacticalActionMode.Shove);
         }
 
         void Update()
         {
-            if (_titlePromptText != null && GameLoop.Instance != null && GameLoop.Instance.State == GameState.Title)
+            float t = Time.unscaledTime;
+
+            // Title screen subtle breathing aura
+            if (GameLoop.Instance != null && GameLoop.Instance.State == GameState.Title)
             {
-                float alpha = 0.55f + 0.45f * Mathf.Sin(Time.unscaledTime * 3.8f);
-                Color c = Palette.LightningCyan;
-                c.a = alpha;
-                _titlePromptText.color = c;
+                float pulse = 0.5f + 0.5f * Mathf.Sin(t * 2.8f);
+                if (_titleSubPromptText != null)
+                {
+                    Color c = Palette.LightningCyan;
+                    c.a = Mathf.Lerp(0.45f, 1f, pulse);
+                    _titleSubPromptText.color = c;
+                }
+                if (_titleCtaGlow != null)
+                {
+                    Color g = Palette.LightningCyan;
+                    g.a = Mathf.Lerp(0.18f, 0.42f, pulse);
+                    _titleCtaGlow.color = g;
+                }
+                if (_titleGlowImg != null)
+                {
+                    Color tg = Palette.FiligreeGold;
+                    tg.a = Mathf.Lerp(0.18f, 0.30f, 0.5f + 0.5f * Mathf.Sin(t * 1.6f));
+                    _titleGlowImg.color = tg;
+                }
             }
 
-            // Smooth animated HP and XP bars (never snap)
+            // Smooth animated HP bar + delayed catch-up damage trail + XP bar
             if (HeroController.Instance != null && GameLoop.Instance != null)
             {
                 float targetHp = Mathf.Clamp01(HeroController.Instance.CurrentHP / (float)Mathf.Max(1, HeroController.Instance.MaxHP));
                 float targetXp = Mathf.Clamp01(GameLoop.Instance.CurrentXP / (float)Mathf.Max(1, GameLoop.Instance.XPToNextLevel));
-                _displayedHpFill = Mathf.MoveTowards(_displayedHpFill, targetHp, Time.unscaledDeltaTime * 2.4f);
+
+                _displayedHpFill = Mathf.MoveTowards(_displayedHpFill, targetHp, Time.unscaledDeltaTime * 3.2f);
+                if (_trailHpFill < _displayedHpFill)
+                    _trailHpFill = _displayedHpFill;
+                else
+                    _trailHpFill = Mathf.MoveTowards(_trailHpFill, _displayedHpFill, Time.unscaledDeltaTime * 0.75f);
+
                 _displayedXpFill = Mathf.MoveTowards(_displayedXpFill, targetXp, Time.unscaledDeltaTime * 2.0f);
+
                 if (_hpFillImg != null) _hpFillImg.fillAmount = _displayedHpFill;
+                if (_hpTrailFillImg != null) _hpTrailFillImg.fillAmount = _trailHpFill;
                 if (_xpFillImg != null) _xpFillImg.fillAmount = _displayedXpFill;
+
+                // Subtle pulse on active AP crystal glows
+                float apPulse = 0.32f + 0.16f * Mathf.Sin(t * 3.5f);
+                for (int i = 0; i < _apGlows.Count; i++)
+                {
+                    if (_apGlows[i].enabled)
+                    {
+                        Color gc = Palette.LightningCyan;
+                        gc.a = apPulse;
+                        _apGlows[i].color = gc;
+                    }
+                }
             }
 
             // Update Expedition 33 QTE Rings
@@ -672,18 +1147,26 @@ namespace Aetherfall.UI
                     _qtePromptText.text = qte.ActiveBannerText;
                     if (qte.IsAttackQTEActive)
                     {
-                        _qteTargetRingImg.color = Palette.FiligreeGold;
-                        _qteDynamicRingImg.color = (qte.ResonanceRingScale >= 0.78f && qte.ResonanceRingScale <= 1.28f)
-                            ? Palette.FireAmber : Palette.LightningCyan;
+                        bool inSweetSpot = qte.ResonanceRingScale >= 0.78f && qte.ResonanceRingScale <= 1.28f;
+                        _qteTargetRingImg.color = inSweetSpot ? Color.white : Palette.FiligreeGold;
+                        _qteDynamicRingImg.color = inSweetSpot ? Palette.FireAmber : Palette.LightningCyan;
                         _qteDynamicRing.localScale = Vector3.one * qte.ResonanceRingScale;
+                        if (_qteCenterGlowImg != null)
+                            _qteCenterGlowImg.color = inSweetSpot
+                                ? new Color(Palette.FireAmber.r, Palette.FireAmber.g, Palette.FireAmber.b, 0.45f)
+                                : new Color(Palette.FiligreeGold.r, Palette.FiligreeGold.g, Palette.FiligreeGold.b, 0.22f);
                     }
                     else
                     {
-                        _qteTargetRingImg.color = Palette.HeroCrimson;
                         bool inParry = qte.DefenseWindupProgress >= 0.62f;
+                        _qteTargetRingImg.color = inParry ? Palette.LightningCyan : Palette.HeroCrimson;
                         _qteDynamicRingImg.color = inParry ? Palette.LightningCyan : Palette.IvoryCloth;
                         float s = Mathf.Lerp(2.1f, 0.85f, qte.DefenseWindupProgress);
                         _qteDynamicRing.localScale = Vector3.one * s;
+                        if (_qteCenterGlowImg != null)
+                            _qteCenterGlowImg.color = inParry
+                                ? new Color(Palette.LightningCyan.r, Palette.LightningCyan.g, Palette.LightningCyan.b, 0.45f)
+                                : new Color(Palette.HeroCrimson.r, Palette.HeroCrimson.g, Palette.HeroCrimson.b, 0.26f);
                     }
                 }
             }

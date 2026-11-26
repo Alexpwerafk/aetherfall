@@ -1,9 +1,12 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 using Aetherfall.Audio;
 using Aetherfall.Core;
 using Aetherfall.Feel;
+using Aetherfall.UI;
 
 namespace Aetherfall.Gameplay
 {
@@ -37,7 +40,11 @@ namespace Aetherfall.Gameplay
 
         public ProceduralCharacterAnimator Animator { get; private set; }
 
-        TextMeshPro _overheadLabel;
+        Transform _overheadRoot;
+        TextMeshProUGUI _overheadNameText;
+        TextMeshProUGUI _overheadHpText;
+        UnityEngine.UI.Image _overheadHpFill;
+        readonly List<UnityEngine.UI.Image> _postureGems = new List<UnityEngine.UI.Image>();
 
         void Awake()
         {
@@ -52,37 +59,161 @@ namespace Aetherfall.Gameplay
             RefreshOverheadStatus();
         }
 
+        public string GetLocalizedDisplayName()
+        {
+            switch (DisplayName)
+            {
+                case "Corrupted Vanguard": return "Vanguardia Corrupta";
+                case "Ledge Sentinel": return "Centinela del Abismo";
+                case "Sanctum Warden": return "Guardián del Santuario";
+                case "Arcane Alchemist": return "Alquimista Arcano";
+                case "Storm Alchemist": return "Alquimista de Tormenta";
+                case "Chrono-Inquisitor Malakor": return "Crono-Inquisidor Malakor";
+                case "Eclipse Guard": return "Guardia del Eclipse";
+                default: return DisplayName;
+            }
+        }
+
         void BuildOverheadStatus()
         {
-            GameObject go = new GameObject("EnemyOverheadStatus");
-            go.transform.SetParent(transform, false);
-            float h = Archetype == EnemyArchetype.ChronoInquisitorBoss ? 3.55f : 2.35f;
-            go.transform.localPosition = new Vector3(0f, h, 0f);
+            UIArtFactory.EnsureInitialized();
+            bool isBoss = Archetype == EnemyArchetype.ChronoInquisitorBoss;
 
-            _overheadLabel = go.AddComponent<TextMeshPro>();
-            _overheadLabel.alignment = TextAlignmentOptions.Center;
-            _overheadLabel.fontSize = 2.25f;
-            _overheadLabel.fontStyle = FontStyles.Bold;
-            _overheadLabel.outlineWidth = 0.28f;
-            _overheadLabel.outlineColor = Palette.ObsidianArmor;
-            _overheadLabel.color = Palette.IvoryCloth;
+            GameObject rootGo = new GameObject("EnemyOverheadCanvas");
+            rootGo.transform.SetParent(transform, false);
+            Canvas c = rootGo.AddComponent<Canvas>();
+            c.renderMode = RenderMode.WorldSpace;
+            c.sortingOrder = 10;
+
+            RectTransform cRt = rootGo.GetComponent<RectTransform>();
+            float h = isBoss ? 3.65f : 2.45f;
+            cRt.localPosition = new Vector3(0f, h, 0f);
+            cRt.localScale = Vector3.one * (isBoss ? 0.0115f : 0.0095f);
+            cRt.sizeDelta = new Vector2(260f, 76f);
+            _overheadRoot = cRt;
+
+            // Backing pill
+            GameObject bgGo = new GameObject("NameplateBg");
+            bgGo.transform.SetParent(rootGo.transform, false);
+            RectTransform bgRt = bgGo.AddComponent<RectTransform>();
+            bgRt.anchorMin = Vector2.zero;
+            bgRt.anchorMax = Vector2.one;
+            bgRt.offsetMin = Vector2.zero;
+            bgRt.offsetMax = Vector2.zero;
+            UnityEngine.UI.Image bgImg = bgGo.AddComponent<UnityEngine.UI.Image>();
+            bgImg.sprite = UIArtFactory.ChamferPanelSoft;
+            bgImg.type = UnityEngine.UI.Image.Type.Sliced;
+            bgImg.color = new Color(0.07f, 0.10f, 0.20f, 0.88f);
+            bgImg.raycastTarget = false;
+
+            // Name label
+            GameObject nameGo = new GameObject("NameTxt");
+            nameGo.transform.SetParent(bgGo.transform, false);
+            RectTransform nRt = nameGo.AddComponent<RectTransform>();
+            nRt.anchorMin = new Vector2(0f, 0.58f);
+            nRt.anchorMax = new Vector2(1f, 1f);
+            nRt.offsetMin = new Vector2(8f, 0f);
+            nRt.offsetMax = new Vector2(-8f, -4f);
+            _overheadNameText = nameGo.AddComponent<TextMeshProUGUI>();
+            _overheadNameText.alignment = TextAlignmentOptions.Center;
+            _overheadNameText.fontSize = isBoss ? 19f : 17f;
+            _overheadNameText.fontStyle = FontStyles.Bold;
+            _overheadNameText.outlineWidth = 0.2f;
+            _overheadNameText.outlineColor = new Color(0.03f, 0.05f, 0.10f, 0.95f);
+            _overheadNameText.color = isBoss ? Palette.FiligreeGold : Palette.IvoryCloth;
+            _overheadNameText.raycastTarget = false;
+
+            // HP Bar Track
+            GameObject trackGo = new GameObject("HpTrack");
+            trackGo.transform.SetParent(bgGo.transform, false);
+            RectTransform tRt = trackGo.AddComponent<RectTransform>();
+            tRt.anchorMin = new Vector2(0.06f, 0.28f);
+            tRt.anchorMax = new Vector2(0.94f, 0.56f);
+            tRt.offsetMin = Vector2.zero;
+            tRt.offsetMax = Vector2.zero;
+            UnityEngine.UI.Image trackImg = trackGo.AddComponent<UnityEngine.UI.Image>();
+            trackImg.sprite = UIArtFactory.RoundedPill;
+            trackImg.type = UnityEngine.UI.Image.Type.Sliced;
+            trackImg.color = new Color(0.04f, 0.06f, 0.12f, 0.95f);
+            trackImg.raycastTarget = false;
+
+            GameObject fillGo = new GameObject("HpFill");
+            fillGo.transform.SetParent(trackGo.transform, false);
+            RectTransform fRt = fillGo.AddComponent<RectTransform>();
+            fRt.anchorMin = Vector2.zero;
+            fRt.anchorMax = Vector2.one;
+            fRt.offsetMin = new Vector2(2f, 2f);
+            fRt.offsetMax = new Vector2(-2f, -2f);
+            _overheadHpFill = fillGo.AddComponent<UnityEngine.UI.Image>();
+            _overheadHpFill.sprite = UIArtFactory.GradientBar;
+            _overheadHpFill.type = UnityEngine.UI.Image.Type.Filled;
+            _overheadHpFill.fillMethod = UnityEngine.UI.Image.FillMethod.Horizontal;
+            _overheadHpFill.color = isBoss ? Palette.BossEclipse : Palette.HeroCrimson;
+            _overheadHpFill.raycastTarget = false;
+
+            GameObject hpTxtGo = new GameObject("HpVal");
+            hpTxtGo.transform.SetParent(trackGo.transform, false);
+            RectTransform htRt = hpTxtGo.AddComponent<RectTransform>();
+            htRt.anchorMin = Vector2.zero;
+            htRt.anchorMax = Vector2.one;
+            htRt.offsetMin = Vector2.zero;
+            htRt.offsetMax = Vector2.zero;
+            _overheadHpText = hpTxtGo.AddComponent<TextMeshProUGUI>();
+            _overheadHpText.alignment = TextAlignmentOptions.Center;
+            _overheadHpText.fontSize = 14f;
+            _overheadHpText.fontStyle = FontStyles.Bold;
+            _overheadHpText.color = Palette.IvoryCloth;
+            _overheadHpText.outlineWidth = 0.2f;
+            _overheadHpText.outlineColor = new Color(0.03f, 0.05f, 0.10f, 0.95f);
+            _overheadHpText.raycastTarget = false;
+
+            // Posture Diamonds row
+            _postureGems.Clear();
+            int pips = Mathf.Max(1, MaxPosture);
+            float spacing = 20f;
+            float startX = -((pips - 1) * spacing) * 0.5f;
+            for (int i = 0; i < pips; i++)
+            {
+                GameObject gemGo = new GameObject($"PostureGem_{i}");
+                gemGo.transform.SetParent(bgGo.transform, false);
+                RectTransform gRt = gemGo.AddComponent<RectTransform>();
+                gRt.anchorMin = new Vector2(0.5f, 0f);
+                gRt.anchorMax = new Vector2(0.5f, 0f);
+                gRt.pivot = new Vector2(0.5f, 0.5f);
+                gRt.anchoredPosition = new Vector2(startX + i * spacing, 12f);
+                gRt.sizeDelta = new Vector2(14f, 14f);
+                UnityEngine.UI.Image gImg = gemGo.AddComponent<UnityEngine.UI.Image>();
+                gImg.sprite = UIArtFactory.DiamondGem;
+                gImg.color = Palette.FiligreeGold;
+                gImg.raycastTarget = false;
+                _postureGems.Add(gImg);
+            }
         }
 
         void LateUpdate()
         {
-            if (_overheadLabel != null && Camera.main != null)
-                _overheadLabel.transform.rotation = Camera.main.transform.rotation;
+            if (_overheadRoot != null && Camera.main != null)
+                _overheadRoot.rotation = Camera.main.transform.rotation;
         }
 
         void RefreshOverheadStatus()
         {
-            if (_overheadLabel == null) return;
+            if (_overheadNameText == null) return;
             string statusTag = "";
-            if (IsStunned) statusTag = " [STUNNED]";
-            else if (IsProne) statusTag = " [PRONE]";
-            string postureStr = new string('*', Mathf.Max(0, CurrentPosture));
-            _overheadLabel.text = $"{DisplayName}\nHP {CurrentHP}/{MaxHP} | BRK [{postureStr}]{statusTag}";
-            _overheadLabel.color = IsStunned ? Palette.LightningCyan : (IsProne ? Palette.FrostIce : Palette.FiligreeGold);
+            if (IsStunned) statusTag = " [ATURDIDO]";
+            else if (IsProne) statusTag = " [DERRIBADO]";
+
+            _overheadNameText.text = $"{GetLocalizedDisplayName()}{statusTag}";
+            _overheadNameText.color = IsStunned ? Palette.LightningCyan : (IsProne ? Palette.FrostIce :
+                (Archetype == EnemyArchetype.ChronoInquisitorBoss ? Palette.FiligreeGold : Palette.IvoryCloth));
+
+            if (_overheadHpFill != null)
+                _overheadHpFill.fillAmount = Mathf.Clamp01(CurrentHP / (float)Mathf.Max(1, MaxHP));
+            if (_overheadHpText != null)
+                _overheadHpText.text = $"{CurrentHP} / {MaxHP} PV";
+
+            for (int i = 0; i < _postureGems.Count; i++)
+                _postureGems[i].color = i < CurrentPosture ? Palette.FiligreeGold : new Color(0.15f, 0.18f, 0.28f, 0.7f);
         }
 
         public void ApplyStatus(bool stunned, bool prone)
@@ -102,7 +233,7 @@ namespace Aetherfall.Gameplay
             if (CurrentPosture == 0)
             {
                 IsStunned = true;
-                FeelManager.Instance?.SpawnFloatingText(transform.position, "POSTURE BROKEN! STUNNED!", Palette.FiligreeGold, 1.25f);
+                FeelManager.Instance?.SpawnFloatingText(transform.position, "¡POSTURA ROTA! ¡ATURDIDO!", Palette.FiligreeGold, 1.25f);
             }
             RefreshOverheadStatus();
         }
@@ -125,7 +256,7 @@ namespace Aetherfall.Gameplay
             FeelManager.Instance?.FlashObject(gameObject, flashCol, 0.16f);
             FeelManager.Instance?.PopTransform(transform, 1.12f, 0.16f);
 
-            string tag = bonusCrit ? $"CRIT -{dmg}!" : $"-{dmg}";
+            string tag = bonusCrit ? $"¡CRÍTICO -{dmg}!" : $"-{dmg}";
             FeelManager.Instance?.SpawnFloatingText(transform.position, tag, flashCol, bonusCrit ? 1.25f : 1.0f);
 
             if (element == ElementType.Fire) VfxPoolManager.Instance?.SpawnFireExplosion(transform.position);
@@ -147,7 +278,7 @@ namespace Aetherfall.Gameplay
 
         IEnumerator AbyssFallCoroutine()
         {
-            FeelManager.Instance?.SpawnFloatingText(transform.position, "SHOVED INTO ABYSS!", Palette.FiligreeGold, 1.35f);
+            FeelManager.Instance?.SpawnFloatingText(transform.position, "¡EMPUJADO AL ABISMO!", Palette.FiligreeGold, 1.35f);
             SynthAudioManager.Instance?.PlayLevelUpSting();
             Vector3 start = transform.position;
             Vector3 end = start + Vector3.down * 11f + Vector3.right * Mathf.Sign(start.x) * 2f;
@@ -201,7 +332,7 @@ namespace Aetherfall.Gameplay
 
             if (IsStunned || IsProne)
             {
-                string msg = IsStunned ? "STUNNED — TURN SKIPPED!" : "RECOVERING FROM PRONE!";
+                string msg = IsStunned ? "¡ATURDIDO — TURNO PERDIDO!" : "¡RECUPERÁNDOSE!";
                 FeelManager.Instance?.SpawnFloatingText(transform.position, msg, Palette.LightningCyan, 1.15f);
                 IsStunned = false;
                 IsProne = false;

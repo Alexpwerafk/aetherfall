@@ -9,9 +9,19 @@ namespace Aetherfall.Gameplay
     public class GoldenChest : MonoBehaviour
     {
         public WeaponType RewardWeapon = WeaponType.StormHalberd;
-        public string WeaponTitle = "Stormcaller Halberd [Lightning]";
+        public string WeaponTitle = "Alabarda de Tormenta [Rayo]";
         public Transform LidTransform;
         public bool IsOpened { get; private set; }
+
+        string GetLocalizedWeaponTitle()
+        {
+            switch (RewardWeapon)
+            {
+                case WeaponType.SolarGreatsword: return "Espadón Solar [Fuego]";
+                case WeaponType.StormHalberd: return "Alabarda de Tormenta [Rayo]";
+                default: return "Hoja Rúnica Glacial [Hielo]";
+            }
+        }
 
         void Start()
         {
@@ -30,7 +40,7 @@ namespace Aetherfall.Gameplay
         {
             SynthAudioManager.Instance?.PlayChestFanfare();
             VfxPoolManager.Instance?.SpawnLevelUpConfetti(transform.position);
-            FeelManager.Instance?.SpawnFloatingText(transform.position, $"LOOT: {WeaponTitle}!", Palette.FiligreeGold, 1.2f);
+            FeelManager.Instance?.SpawnFloatingText(transform.position, $"¡BOTÍN: {GetLocalizedWeaponTitle()}!", Palette.FiligreeGold, 1.2f);
 
             if (hero != null)
                 hero.EquipWeapon(RewardWeapon);

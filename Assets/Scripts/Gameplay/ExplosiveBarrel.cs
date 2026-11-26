@@ -21,7 +21,7 @@ namespace Aetherfall.Gameplay
             SynthAudioManager.Instance?.PlayElementalReaction("Fire");
             FeelManager.Instance?.TriggerShake(0.85f);
             FeelManager.Instance?.TriggerHitStop(0.07f);
-            FeelManager.Instance?.SpawnFloatingText(pos, "BARREL DETONATED!", Palette.FireAmber, 1.25f);
+            FeelManager.Instance?.SpawnFloatingText(pos, "¡BARRIL DETONADO!", Palette.FireAmber, 1.25f);
 
             if (GameLoop.Instance != null)
             {
